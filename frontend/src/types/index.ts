@@ -6,8 +6,8 @@ export interface SourceItem {
   content: string;
   similarity: number;
   relevance_tier: 'High' | 'Medium' | 'Low';
-  source_type?: string;
-  category_label?: string;
+  source_type: 'general_knowledge' | 'sample_policy' | 'user_upload' | 'msmarco_xi' | string;
+  category_label: string;
   metadata: Record<string, any>;
 }
 
@@ -19,6 +19,7 @@ export interface LatencyBreakdown {
   retrieval_ms: number;
   prompt_construction_ms: number;
   generation_ms: number;
+  groundedness_check_ms?: number;
   total_rag_ms: number;
   total_pipeline_ms: number;
 }
@@ -36,6 +37,7 @@ export interface AskResponse {
   grounded: boolean;
   abstained: boolean;
   confidence: number;
+  groundedness_score?: number | null;
   sources: SourceItem[];
   latency: LatencyBreakdown;
   guardrails: GuardrailInfo;
@@ -51,8 +53,10 @@ export interface DocumentInfo {
   chunks_count: number;
   uploaded_at: string;
   is_sample: boolean;
-  source_type?: string;
-  category_badge?: string;
+  source_type: string;
+  category_badge: string;
+  language?: string | null;
+  collection: string;
 }
 
 export interface ChunkInfo {
@@ -69,16 +73,17 @@ export interface KnowledgeBaseStats {
   documents_count: number;
   chunks_count: number;
   embeddings_count: number;
-  chunking_strategy: 'fixed' | 'sentence' | 'recursive' | string;
+  chunking_strategy: string;
   chunk_size: number;
   chunk_overlap: number;
   last_indexed_at?: string | null;
   embedding_dimension: number;
   index_ready: boolean;
+  collection: string;
 }
 
 export interface ReindexRequest {
-  chunk_strategy: string;
+  chunk_strategy: 'fixed' | 'sentence' | 'recursive' | 'semantic' | string;
   chunk_size: number;
   chunk_overlap: number;
 }
@@ -123,6 +128,8 @@ export interface BenchmarkSummary {
   p70_generation_ms: number;
   p100_generation_ms: number;
   target_ms: number;
+  meets_retrieval_target: boolean;
+  meets_e2e_target: boolean;
   meets_target: boolean;
   runs: BenchmarkQueryRun[];
 }
@@ -153,4 +160,7 @@ export interface SystemStatus {
   optimizations: string[];
   environment: string;
   server_time: string;
+  stt_provider?: string;
+  stt_configured?: boolean;
+  active_collection?: string;
 }

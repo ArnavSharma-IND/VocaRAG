@@ -31,7 +31,8 @@ export const api = {
     query: string,
     voiceLatencyMs?: number,
     topK?: number,
-    threshold?: number
+    threshold?: number,
+    collection: string = 'msmarco'
   ): Promise<AskResponse> {
     const res = await fetch(`${API_BASE_URL}/ask`, {
       method: 'POST',
@@ -41,14 +42,33 @@ export const api = {
         voice_latency_ms: voiceLatencyMs,
         top_k: topK,
         threshold: threshold,
+        collection: collection,
       }),
     });
     return handleResponse<AskResponse>(res);
   },
 
-  async uploadDocument(file: File): Promise<DocumentInfo> {
+  async transcribeAudio(
+    audioBlob: Blob,
+    languageCode: string = 'hi-IN',
+    mode: string = 'transcribe'
+  ): Promise<{ transcript: string; language: string; latency_ms: number; error?: string }> {
+    const formData = new FormData();
+    formData.append('file', audioBlob, 'mic_recording.webm');
+    formData.append('language_code', languageCode);
+    formData.append('mode', mode);
+
+    const res = await fetch(`${API_BASE_URL}/stt/transcribe`, {
+      method: 'POST',
+      body: formData,
+    });
+    return handleResponse<{ transcript: string; language: string; latency_ms: number; error?: string }>(res);
+  },
+
+  async uploadDocument(file: File, collection: string = 'enterprise'): Promise<DocumentInfo> {
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('collection', collection);
     const res = await fetch(`${API_BASE_URL}/ingest`, {
       method: 'POST',
       body: formData,
@@ -56,20 +76,21 @@ export const api = {
     return handleResponse<DocumentInfo>(res);
   },
 
-  async getDocuments(): Promise<DocumentInfo[]> {
-    const res = await fetch(`${API_BASE_URL}/documents`);
+  async getDocuments(collection?: string): Promise<DocumentInfo[]> {
+    const params = collection ? `?collection=${collection}` : '';
+    const res = await fetch(`${API_BASE_URL}/documents${params}`);
     return handleResponse<DocumentInfo[]>(res);
   },
 
-  async deleteDocument(docId: string): Promise<{ success: boolean; message: string }> {
-    const res = await fetch(`${API_BASE_URL}/documents/${docId}`, {
+  async deleteDocument(docId: string, collection: string = 'enterprise'): Promise<{ success: boolean; message: string }> {
+    const res = await fetch(`${API_BASE_URL}/documents/${docId}?collection=${collection}`, {
       method: 'DELETE',
     });
     return handleResponse<{ success: boolean; message: string }>(res);
   },
 
-  async reindexKnowledgeBase(req: ReindexRequest): Promise<KnowledgeBaseStats> {
-    const res = await fetch(`${API_BASE_URL}/reindex`, {
+  async reindexKnowledgeBase(req: ReindexRequest, collection: string = 'enterprise'): Promise<KnowledgeBaseStats> {
+    const res = await fetch(`${API_BASE_URL}/reindex?collection=${collection}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(req),
@@ -77,14 +98,15 @@ export const api = {
     return handleResponse<KnowledgeBaseStats>(res);
   },
 
-  async getKnowledgeBaseStats(): Promise<KnowledgeBaseStats> {
-    const res = await fetch(`${API_BASE_URL}/stats`);
+  async getKnowledgeBaseStats(collection: string = 'enterprise'): Promise<KnowledgeBaseStats> {
+    const res = await fetch(`${API_BASE_URL}/stats?collection=${collection}`);
     return handleResponse<KnowledgeBaseStats>(res);
   },
 
-  async getChunks(docId?: string, limit: number = 50): Promise<ChunkInfo[]> {
+  async getChunks(docId?: string, collection: string = 'enterprise', limit: number = 50): Promise<ChunkInfo[]> {
     const params = new URLSearchParams();
     if (docId) params.append('doc_id', docId);
+    params.append('collection', collection);
     params.append('limit', limit.toString());
     const res = await fetch(`${API_BASE_URL}/chunks?${params.toString()}`);
     return handleResponse<ChunkInfo[]>(res);
@@ -93,12 +115,13 @@ export const api = {
   async searchRetrieval(
     query: string,
     topK: number = 5,
-    threshold: number = 0.35
+    threshold: number = 0.30,
+    collection: string = 'msmarco'
   ): Promise<RetrievalSearchResult> {
     const res = await fetch(`${API_BASE_URL}/retrieval/search`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, top_k: topK, threshold }),
+      body: JSON.stringify({ query, top_k: topK, threshold, collection }),
     });
     return handleResponse<RetrievalSearchResult>(res);
   },
