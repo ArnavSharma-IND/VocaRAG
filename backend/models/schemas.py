@@ -9,9 +9,9 @@ class SourceItem(BaseModel):
     chunk_index: int
     content: str
     similarity: float
-    relevance_tier: str = "Medium" # High | Medium | Low
-    source_type: str = "document" # general_knowledge | sample_policy | user_upload
-    category_label: str = "DOCUMENT" # GENERAL KNOWLEDGE | POLICY | DOCUMENT
+    relevance_tier: str = "Medium"  # High | Medium | Low
+    source_type: str = "document"  # general_knowledge | sample_policy | user_upload | msmarco_xi
+    category_label: str = "DOCUMENT"  # GENERAL KNOWLEDGE | POLICY | DOCUMENT | MSMARCO
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 class LatencyBreakdown(BaseModel):
@@ -22,12 +22,13 @@ class LatencyBreakdown(BaseModel):
     retrieval_ms: float = 0.0
     prompt_construction_ms: float = 0.0
     generation_ms: float = 0.0
+    groundedness_check_ms: float = 0.0
     total_rag_ms: float = 0.0
     total_pipeline_ms: float = 0.0
 
 class GuardrailInfo(BaseModel):
     passed: bool = True
-    flagged_type: Optional[str] = None # PROMPT_INJECTION | OUT_OF_SCOPE | INSUFFICIENT_EVIDENCE | None
+    flagged_type: Optional[str] = None
     reason: Optional[str] = None
     abstained: bool = False
 
@@ -38,6 +39,7 @@ class QueryRequest(BaseModel):
     chunk_strategy: Optional[str] = None
     voice_latency_ms: Optional[float] = None
     override_provider: Optional[str] = None
+    collection: Optional[str] = None  # enterprise | msmarco
 
 class AskResponse(BaseModel):
     query: str
@@ -45,10 +47,11 @@ class AskResponse(BaseModel):
     grounded: bool
     abstained: bool
     confidence: float
+    groundedness_score: Optional[float] = None
     sources: List[SourceItem] = Field(default_factory=list)
     latency: LatencyBreakdown
     guardrails: GuardrailInfo
-    mode: str = "Live" # Live | Demo
+    mode: str = "Live"
     retrieval_explanation: Optional[str] = None
 
 class DocumentInfo(BaseModel):
@@ -59,8 +62,10 @@ class DocumentInfo(BaseModel):
     chunks_count: int
     uploaded_at: str
     is_sample: bool = False
-    source_type: str = "sample_policy" # general_knowledge | sample_policy | user_upload
-    category_badge: str = "SAMPLE" # GENERAL | SAMPLE | UPLOAD
+    source_type: str = "sample_policy"
+    category_badge: str = "SAMPLE"  # GENERAL | SAMPLE | UPLOAD | MSMARCO
+    language: Optional[str] = None
+    collection: str = "enterprise"  # enterprise | msmarco
 
 class ChunkInfo(BaseModel):
     id: str
@@ -81,6 +86,7 @@ class KnowledgeBaseStats(BaseModel):
     last_indexed_at: Optional[str]
     embedding_dimension: int
     index_ready: bool
+    collection: str = "enterprise"
 
 class ReindexRequest(BaseModel):
     chunk_strategy: str = "recursive"
@@ -91,6 +97,7 @@ class RetrievalSearchRequest(BaseModel):
     query: str
     top_k: int = 5
     threshold: float = 0.25
+    collection: Optional[str] = None
 
 class RetrievalSearchResult(BaseModel):
     query: str
@@ -130,7 +137,10 @@ class BenchmarkSummary(BaseModel):
     p70_generation_ms: float
     p100_generation_ms: float
     target_ms: float = 200.0
-    meets_target: bool
+    meets_retrieval_target: bool = True
+    meets_e2e_target: bool = True
+    # Keep old field for backward compat
+    meets_target: bool = True
     runs: List[BenchmarkQueryRun] = Field(default_factory=list)
 
 class GuardrailCheckRequest(BaseModel):
@@ -141,8 +151,8 @@ class GuardrailCheckResponse(BaseModel):
     passed: bool
     flagged_type: Optional[str] = None
     reason: Optional[str] = None
-    risk_level: str = "LOW" # LOW | MEDIUM | HIGH
-    recommended_action: str = "ALLOW" # ALLOW | BLOCK | ABSTAIN
+    risk_level: str = "LOW"
+    recommended_action: str = "ALLOW"
 
 class SystemStatus(BaseModel):
     voice_engine_status: str
@@ -161,3 +171,6 @@ class SystemStatus(BaseModel):
     optimizations: List[str]
     environment: str = "production-ready"
     server_time: str
+    stt_provider: str = "sarvam"
+    stt_configured: bool = False
+    active_collection: str = "enterprise"

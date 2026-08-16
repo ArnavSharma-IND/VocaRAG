@@ -14,6 +14,7 @@ class EmbeddingEngine:
     _cache: Dict[str, np.ndarray] = {}
     _is_ready: bool = False
     _dimension: int = settings.EMBEDDING_DIMENSION
+    _loaded_model_name: Optional[str] = None  # Track which model is actually loaded
 
     def __new__(cls):
         if cls._instance is None:
@@ -23,14 +24,25 @@ class EmbeddingEngine:
     def initialize(self):
         """Initializes the SentenceTransformer embedding model."""
         if self._is_ready and self._model is not None:
-            return
+            # Check if model name changed since last load
+            if self._loaded_model_name == self._model_name:
+                return
+            else:
+                logger.warning(
+                    f"Embedding model changed from {self._loaded_model_name} to {self._model_name}. "
+                    f"Clearing cache and reloading."
+                )
+                self._cache.clear()
+                self._model = None
+                self._is_ready = False
 
         try:
             logger.info(f"Loading embedding model: {self._model_name}...")
             from sentence_transformers import SentenceTransformer
             self._model = SentenceTransformer(self._model_name)
-            self._dimension = self._model.get_sentence_embedding_dimension()
+            self._dimension = getattr(self._model, "get_embedding_dimension", self._model.get_sentence_embedding_dimension)()
             self._is_ready = True
+            self._loaded_model_name = self._model_name
             logger.info(f"Embedding model loaded successfully. Dimension: {self._dimension}")
         except Exception as e:
             logger.warning(f"Could not load SentenceTransformer ({e}). Initializing fallback lightweight dense vectorizer.")
@@ -48,6 +60,10 @@ class EmbeddingEngine:
     @property
     def cache_size(self) -> int:
         return len(self._cache)
+
+    @property
+    def model_name(self) -> str:
+        return self._model_name
 
     def _get_hash(self, text: str) -> str:
         return hashlib.md5(text.strip().lower().encode("utf-8")).hexdigest()
