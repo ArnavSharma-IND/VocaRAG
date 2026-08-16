@@ -1,0 +1,246 @@
+================================================================================
+VOCARAG GENERAL KNOWLEDGE BASE & FACTUAL ENCYCLOPEDIA (REV 2026.1)
+================================================================================
+
+--------------------------------------------------------------------------------
+1. BASIC SCIENCE & NATURAL PHENOMENA
+--------------------------------------------------------------------------------
+
+[WHAT IS MATTER AND STATES OF MATTER]
+Matter is anything that has mass and takes up space by having volume. All physical objects in the universe are composed of matter. The fundamental states of matter observed in everyday life are solid, liquid, and gas:
+- Solids have a definite shape and volume because their constituent particles (atoms or molecules) are tightly packed in fixed positions.
+- Liquids have a definite volume but take the shape of their container because particles are closely packed but free to flow past one another.
+- Gases have neither a definite shape nor a fixed volume, expanding completely to fill any container because particles have high kinetic energy and weak intermolecular forces.
+- A fourth state of matter, plasma, occurs at extremely high temperatures where electrons are stripped from atomic nuclei, creating an ionized gas found in stars, lightning, and neon signs.
+
+[ATOMS AND MOLECULES]
+An atom is the basic unit of a chemical element. Atoms consist of a central nucleus containing positively charged protons and neutral neutrons, surrounded by a cloud of negatively charged electrons. Elements are pure chemical substances made of only one type of atom. A molecule is formed when two or more atoms bond together chemically through covalent or ionic bonds (such as H2O for water or O2 for diatomic oxygen).
+
+[GRAVITY AND FUNDAMENTAL FORCES]
+Gravity is a universal attractive force that pulls objects with mass toward one another. On Earth, gravity accelerates falling objects at approximately 9.8 meters per second squared (9.8 m/s^2). Sir Isaac Newton formulated the Universal Law of Gravitation, which states that gravitational force is directly proportional to the product of two masses and inversely proportional to the square of the distance between them. Albert Einstein's General Theory of Relativity later described gravity as the curvature of spacetime caused by mass and energy.
+
+[LIGHT AND THE ELECTROMAGNETIC SPECTRUM]
+Light is electromagnetic radiation that behaves as both a wave and a particle (called a photon). In a vacuum, light travels at a constant speed of approximately 299,792 kilometers per second (about 300,000 km/s or 186,000 miles per second). The electromagnetic spectrum encompasses radio waves, microwaves, infrared, visible light (red, orange, yellow, green, blue, indigo, violet), ultraviolet, X-rays, and gamma rays.
+
+[SOUND WAVES AND TRANSMISSION]
+Sound is a mechanical pressure wave produced by vibrating objects. Unlike light, sound requires a physical medium (such as air, water, or solid materials) to travel and cannot propagate through a vacuum. In dry air at room temperature (20 degrees Celsius), sound travels at approximately 343 meters per second (1,235 km/h). Sound frequency is measured in Hertz (Hz), where human hearing typically spans from 20 Hz to 20,000 Hz.
+
+[ELECTRICITY AND MAGNETISM]
+Electricity is the flow of electric charge, primarily through the movement of free electrons along a conductor. Voltage (measured in volts) is the electric potential difference driving the current (measured in amperes), while resistance (measured in ohms) opposes current flow, governed by Ohm's Law (Voltage = Current * Resistance). Magnetism is a physical phenomenon produced by moving electric charges. Electromagnetism unites electricity and magnetism into a single fundamental force of nature.
+
+[PHOTOSYNTHESIS PROCESS]
+Photosynthesis is the biochemical process by which green plants, algae, and certain bacteria convert sunlight, carbon dioxide (CO2), and water (H2O) into glucose (a sugar used for energy) and oxygen (O2). The primary chemical equation is:
+6CO2 + 6H2O + Light Energy -> C6H12O6 + 6O2.
+Photosynthesis takes place within cellular organelles called chloroplasts, which contain chlorophyll, the green pigment that absorbs solar light energy (predominantly red and blue wavelengths while reflecting green).
+
+[THE WATER CYCLE]
+The water cycle (hydrologic cycle) describes the continuous movement of water on, above, and below the surface of Earth. The primary stages are:
+1. Evaporation: Solar heat converts liquid surface water from oceans, lakes, and rivers into atmospheric water vapor.
+2. Transpiration: Moisture released from plant leaves into the atmosphere.
+3. Condensation: Water vapor cools as it rises, condensing around microscopic particles to form clouds and fog.
+4. Precipitation: Water returns to Earth's surface as rain, snow, sleet, or hail when cloud droplets become heavy enough.
+5. Infiltration and Runoff: Water soaks into the ground as groundwater or flows across terrain into rivers, lakes, and oceans.
+
+[THE SOLAR SYSTEM, EARTH, MOON, AND SUN]
+The Solar System consists of our central star, the Sun, and eight major planets orbiting it: Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, and Neptune (along with dwarf planets like Pluto).
+- The Sun is a yellow dwarf star containing over 99.8% of the Solar System's total mass, powered by nuclear fusion of hydrogen into helium in its core.
+- Earth is the third planet from the Sun and the only known celestial body to support life, with a surface covered by approximately 71% water and an atmosphere composed of 78% nitrogen, 21% oxygen, and 1% argon and trace gases.
+- The Moon is Earth's only natural satellite, orbiting at an average distance of about 384,400 km, responsible for generating ocean tides through gravitational pull.
+
+[HUMAN BODY BASICS]
+The human body is an organized biological system composed of cells, tissues, organs, and organ systems:
+- Circulatory System: The heart pumps oxygenated blood through arteries and returns deoxygenated blood through veins.
+- Respiratory System: The lungs take in oxygen during inhalation and expel carbon dioxide during exhalation.
+- Nervous System: The brain, spinal cord, and peripheral nerves coordinate bodily sensations, voluntary actions, and involuntary reflexes.
+- Digestive System: Converts ingested food into essential nutrients, amino acids, vitamins, and energy.
+- Skeletal and Muscular Systems: Provide structural support, protection of internal organs, and locomotion through 206 bones and over 600 muscles in an adult human.
+
+--------------------------------------------------------------------------------
+2. COMPUTER SCIENCE, SOFTWARE & ARTIFICIAL INTELLIGENCE
+--------------------------------------------------------------------------------
+
+[WHAT IS A COMPUTER AND HARDWARE ARCHITECTURE]
+A computer is an electronic programmable machine designed to accept raw input data, process it according to algorithmic instructions, store results, and generate output. The essential hardware components include:
+- CPU (Central Processing Unit): The primary processor or "brain" of the computer that fetches, decodes, and executes program instructions.
+- RAM (Random Access Memory): High-speed, volatile working memory used to hold active operating system processes, programs, and data for immediate CPU access. Data in RAM is lost when power is turned off.
+- ROM (Read-Only Memory): Non-volatile memory containing permanent firmware instructions (such as the BIOS/UEFI) required to bootstrap the computer hardware upon startup.
+- Storage: Non-volatile storage devices such as Solid State Drives (SSDs) and Hard Disk Drives (HDDs) that retain operating systems, files, and applications permanently.
+- GPU (Graphics Processing Unit): Specialized processor with thousands of smaller cores designed for highly parallel mathematical operations, graphics rendering, and machine learning tensor calculations.
+
+[OPERATING SYSTEMS]
+An Operating System (OS) is system software that manages computer hardware, memory allocation, storage systems, and CPU scheduling while providing common services and user interfaces for application software. Prominent operating systems include Linux, Microsoft Windows, macOS, Android, and iOS.
+
+[NETWORKING, THE INTERNET, AND WEB PROTOCOLS]
+- The Internet: A global interconnected network of computer networks utilizing the standardized TCP/IP (Transmission Control Protocol / Internet Protocol) suite to communicate.
+- IP Address (Internet Protocol Address): A numerical or alphanumeric identifier assigned to each device connected to a network (IPv4 uses 32-bit addresses like 192.168.1.1; IPv6 uses 128-bit hexadecimal addresses).
+- DNS (Domain Name System): The decentralized naming system that translates human-readable domain names (such as vocarag.ai) into machine-readable IP addresses.
+- URL (Uniform Resource Locator): A standardized web address specifying the location of a specific resource on the internet (e.g., https://example.com/docs).
+- HTTP & HTTPS: Hypertext Transfer Protocol is the foundational application protocol for transmitting web pages and data across the World Wide Web. HTTPS (HTTP Secure) encrypts all communication using TLS/SSL (Transport Layer Security) encryption to prevent eavesdropping and tampering.
+
+[DATABASES AND SQL]
+A database is an organized collection of structured or semi-structured data stored electronically:
+- Relational Databases (RDBMS): Organize data into tables consisting of rows (records) and columns (fields) linked by relationships. Examples include PostgreSQL, MySQL, SQLite, and Oracle.
+- SQL (Structured Query Language): The standard declarative domain-specific language used to query, insert, update, and manage relational database data.
+- NoSQL Databases: Non-relational databases optimized for unstructured or high-velocity data, including document stores (MongoDB), key-value stores (Redis), and graph databases (Neo4j).
+
+[PROGRAMMING LANGUAGES AND ALGORITHMS]
+A programming language is a formal constructed notation designed to communicate instructions to a computer. Prominent languages include Python (widely used for AI, data science, and backend development), JavaScript/TypeScript (the standard language for web frontend and full-stack development), C/C++ (high-performance systems and engine development), and Rust (memory-safe systems programming). An algorithm is a finite, step-by-step sequence of well-defined computational instructions designed to solve a specific problem or perform a task.
+
+[ARTIFICIAL INTELLIGENCE, MACHINE LEARNING, AND NEURAL NETWORKS]
+- Artificial Intelligence (AI): The broad scientific discipline of creating computer systems capable of performing tasks that traditionally require human intelligence, such as visual perception, speech recognition, reasoning, and decision-making.
+- Machine Learning (ML): A subset of AI where mathematical models learn patterns from training data to make predictions or decisions without being explicitly rule-programmed.
+- Deep Learning & Neural Networks: Computational models inspired by biological neural architectures, structured in layers of interconnected nodes (neurons) with adjustable weights, enabling models to extract hierarchical features from complex data like images, audio, and natural language.
+- Large Language Models (LLMs): Deep learning transformer models trained on massive text corpora to understand, generate, and process human language.
+
+[APIS (APPLICATION PROGRAMMING INTERFACES)]
+An API (Application Programming Interface) is a set of defined rules, specifications, protocols, and tools that allows one software application to communicate, exchange data, and interact with another. Common API architectures include REST (Representational State Transfer over HTTP using JSON), GraphQL (flexible querying), and gRPC (high-performance binary RPC).
+
+[RAG, VECTOR DATABASES, AND EMBEDDINGS]
+- Vector Embeddings: Numerical representations of text, images, or audio as dense vectors of floating-point numbers in a high-dimensional space (e.g., 384, 768, or 1536 dimensions). Semantically similar concepts are located close to each other in vector space as measured by cosine similarity or inner product distance.
+- Vector Database: A specialized database engine (such as FAISS, Chroma, Pinecone, or Qdrant) designed for indexing and performing fast Approximate Nearest Neighbor (ANN) vector similarity search across millions of dense embedding vectors.
+- RAG (Retrieval Augmented Generation): An enterprise AI architecture that combines dense vector retrieval with large language models. RAG retrieves relevant factual passages from an external indexed document store and injects them into the LLM context prompt, enabling the model to generate accurate, verifiable, cited answers without hallucination.
+
+[CYBERSECURITY, ENCRYPTION, AND AUTHENTICATION]
+- Encryption: The mathematical process of encoding plain text information into ciphertext such that only authorized parties with the correct cryptographic key can read it. Symmetric encryption (AES) uses the same key for encryption and decryption; Asymmetric encryption (RSA, ECC) uses a public key for encryption and a private key for decryption.
+- Authentication: The process of verifying the identity of a user, system, or device (e.g., passwords, multi-factor authentication, biometric scans).
+- Authorization: The process of verifying the specific permissions and access rights granted to an authenticated entity.
+
+--------------------------------------------------------------------------------
+3. MATHEMATICS CONCEPTS & DEFINITIONS
+--------------------------------------------------------------------------------
+
+[ARITHMETIC OPERATIONS]
+- Addition: The mathematical operation of combining two or more numbers into a sum (e.g., 5 + 7 = 12).
+- Subtraction: The operation of taking one number away from another to find the difference (e.g., 15 - 6 = 9).
+- Multiplication: Repeated addition of a number a specified number of times to produce a product (e.g., 4 * 8 = 32).
+- Division: Splitting a number into equal parts or groups to find a quotient (e.g., 20 / 4 = 5).
+
+[PERCENTAGES, FRACTIONS, AND AVERAGES]
+- Percentage: A number or ratio expressed as a fraction of 100, denoted using the % sign (e.g., 25% represents 25/100 or 0.25).
+- Fraction: A numerical quantity that is not a whole number, written as a numerator over a denominator (e.g., 3/4 represents three parts of four equal parts).
+- Mean / Average: The sum of a set of numerical values divided by the total count of values. For example, the average of 10, 20, and 30 is (10 + 20 + 30) / 3 = 20.
+- Median: The middle numerical value in an ordered list of numbers.
+
+[NUMBER CLASSIFICATIONS]
+- Even Numbers: Integers that are exactly divisible by 2 without a remainder (e.g., -4, 0, 2, 4, 6, 8, 10).
+- Odd Numbers: Integers that leave a remainder of 1 when divided by 2 (e.g., 1, 3, 5, 7, 9, 11).
+- Prime Numbers: Whole numbers greater than 1 that have exactly two distinct positive divisors: 1 and the number itself. The first ten prime numbers are 2, 3, 5, 7, 11, 13, 17, 19, 23, and 29 (Note: 2 is the only even prime number).
+- Composite Numbers: Positive integers greater than 1 that have more than two positive divisors (e.g., 4, 6, 8, 9, 10).
+
+[BASIC GEOMETRY: PERIMETER AND AREA]
+- Perimeter: The total continuous distance around the outside boundary of a two-dimensional shape.
+  - Rectangle: Perimeter = 2 * (length + width)
+  - Square: Perimeter = 4 * side
+  - Circle (Circumference): Circumference = 2 * pi * radius (where pi is approximately 3.14159)
+- Area: The measure of two-dimensional surface space enclosed within a boundary.
+  - Rectangle Area = length * width
+  - Square Area = side^2
+  - Triangle Area = 0.5 * base * height
+  - Circle Area = pi * radius^2
+
+--------------------------------------------------------------------------------
+4. WORLD GEOGRAPHY & COUNTRIES
+--------------------------------------------------------------------------------
+
+[CONTINENTS AND OCEANS]
+Earth features 7 continents and 5 major world oceans:
+- Continents (ordered by landmass): Asia (largest), Africa, North America, South America, Antarctica, Europe, and Australia (Oceania).
+- Oceans (ordered by surface area): Pacific Ocean (largest and deepest), Atlantic Ocean, Indian Ocean, Southern (Antarctic) Ocean, and Arctic Ocean (smallest and shallowest).
+
+[COUNTRIES AND MAJOR CAPITAL CITIES]
+- India: The capital city of India is New Delhi. India is the most populous nation on Earth, located in South Asia, with Mumbai as its largest financial metropolis and the Indian Rupee (INR) as its currency.
+- United States of America: The capital city of the United States is Washington, D.C. The United States is located in North America, consisting of 50 states, with New York City as its largest metropolitan area.
+- United Kingdom: The capital city of the United Kingdom is London. The UK is located in Northwestern Europe, comprising England, Scotland, Wales, and Northern Ireland.
+- Japan: The capital city of Japan is Tokyo. Japan is an East Asian island nation in the Pacific Ocean, with Tokyo being the world's most populous metropolitan area.
+- Germany: The capital city of Germany is Berlin. Germany is the largest economy in the European Union, located in Central Europe.
+- France: The capital city of France is Paris. France is a major Western European nation renowned for culture, science, and industry.
+- Australia: The capital city of Australia is Canberra. Australia is a continent and sovereign nation in the Southern Hemisphere, with Sydney and Melbourne as its largest cities.
+- Canada: The capital city of Canada is Ottawa. Canada is located in North America and is the second-largest country by total land area.
+- China: The capital city of China is Beijing. China is a major economic and technological nation located in East Asia.
+- Brazil: The capital city of Brazil is Brasilia. Brazil is the largest country in South America and Latin America.
+
+--------------------------------------------------------------------------------
+5. WORLD HISTORY SUMMARY
+--------------------------------------------------------------------------------
+
+[ANCIENT CIVILIZATIONS]
+Human civilization originated in fertile river valleys around 3000 to 4000 BCE:
+- Mesopotamia (Tigris and Euphrates rivers): Developed the earliest known writing system (cuneiform), the wheel, and the Code of Hammurabi.
+- Ancient Egypt (Nile river): Constructed the pyramids of Giza, created hieroglyphic writing, and developed advanced architectural mathematics and medicine.
+- Indus Valley Civilization (Indus and Ghaggar-Hakra rivers): Known for advanced urban planning, brick architecture, drainage systems, and trade across modern-day India and Pakistan (e.g., Harappa and Mohenjo-daro).
+- Ancient China (Yellow and Yangtze rivers): Contributed papermaking, printing, the magnetic compass, gunpowder, and silk.
+- Classical Greece and Rome: Established democratic governance, classical philosophy (Socrates, Plato, Aristotle), legal frameworks, and monumental engineering.
+
+[THE INDUSTRIAL REVOLUTION]
+The Industrial Revolution was a transformative global period beginning in Great Britain in the mid-18th century (around 1760–1840). It marked the transition from hand-production and agrarian economies to machine manufacturing, powered by the steam engine (refined by James Watt), coal energy, mechanized textile mills, iron smelting, and railroad transportation networks.
+
+[WORLD WAR I AND WORLD WAR II]
+- World War I (1914–1918): A global military conflict centered in Europe between the Allied Powers (including Great Britain, France, Russia, and later the United States) and the Central Powers (Germany, Austria-Hungary, Ottoman Empire), concluding with the Treaty of Versailles and the League of Nations.
+- World War II (1939–1945): The deadliest conflict in human history, sparked by Nazi German aggression in Europe and Japanese expansion in Asia. The Allied Powers (USA, Soviet Union, Great Britain, China, France) defeated the Axis Powers (Germany, Japan, Italy), leading to the founding of the United Nations (UN) in 1945 and the onset of the Atomic Age.
+
+[INDIAN INDEPENDENCE MOVEMENT]
+India achieved sovereignty and independence from British colonial rule on August 15, 1947, following a nationwide struggle led by Mahatma Gandhi (advocating non-violent civil resistance / Satyagraha), Jawaharlal Nehru (India's first Prime Minister), Sardar Vallabhbhai Patel, and Subhas Chandra Bose. The Constitution of India came into effect on January 26, 1950, establishing India as a sovereign democratic republic.
+
+--------------------------------------------------------------------------------
+6. EVERYDAY PHENOMENA & COMMON KNOWLEDGE EXPLANATIONS
+--------------------------------------------------------------------------------
+
+[WHY IS THE SKY BLUE? (RAYLEIGH SCATTERING)]
+The sky appears blue during daylight due to a physical optical phenomenon called Rayleigh Scattering. Sunlight reaches Earth's atmosphere as white light containing all visible colors across the electromagnetic spectrum. Earth's atmosphere is composed of microscopic gas molecules (primarily nitrogen and oxygen). Because blue and violet light travel as shorter, smaller wavelengths, they collide with atmospheric gas molecules and scatter in all directions much more efficiently than longer wavelengths (like red and yellow). Human eyes are far more sensitive to blue light than violet light, causing the daytime sky to appear bright blue.
+
+[WHY DO SEASONS OCCUR?]
+Seasons occur because Earth is tilted on its rotational axis by approximately 23.5 degrees relative to its orbital plane around the Sun. As Earth orbits the Sun over 365.25 days:
+- When the Northern Hemisphere is tilted toward the Sun, it receives more direct solar radiation and longer daylight hours, producing Summer (while the Southern Hemisphere experiences Winter).
+- Six months later, when the Northern Hemisphere is tilted away from the Sun, it receives indirect solar rays and shorter daylight, producing Winter.
+Seasons are NOT caused by the distance between Earth and the Sun.
+
+[WHY DO WE HAVE DAY AND NIGHT?]
+Day and night are caused by Earth rotating on its own axis from west to east once approximately every 24 hours. The side of Earth facing toward the Sun experiences daylight, while the opposite side facing away experiences darkness and night.
+
+[WHY DOES ICE FLOAT ON WATER?]
+Unlike almost all other substances which become denser as they solidify from liquid to solid, water reaches its maximum density at 4 degrees Celsius (39.2 degrees F). When water freezes at 0 degrees Celsius, hydrogen bonds organize water molecules into an open hexagonal crystalline lattice. This lattice structure forces molecules slightly further apart than in liquid form, making solid ice approximately 9% less dense than liquid water, allowing ice cubes, glaciers, and frozen lake surfaces to float.
+
+[WHY DO METALS CONDUCT ELECTRICITY?]
+Metals are excellent electrical conductors because their atomic structure features metallic bonding. In metals, valence electrons are not bound to individual atomic nuclei but form a delocalized "sea of free electrons" that move freely throughout the crystal lattice. When a voltage is applied, these free electrons flow effortlessly, conducting electric current.
+
+[HOW DOES RAIN FORM?]
+Rain forms through atmospheric condensation within clouds. Warm, moisture-laden air rises, expands, and cools. As the air cools to its dew point, water vapor condenses around microscopic aerosol particles (cloud condensation nuclei) to form millions of cloud droplets. As these droplets collide and coalesce inside the cloud, they grow larger and heavier until gravitational force overcomes atmospheric updrafts, causing them to fall to Earth as precipitation (rain).
+
+[BASIC NUTRITION CONCEPTS]
+Human health relies on macronutrients and micronutrients:
+- Carbohydrates: The body's primary and fastest source of energy (e.g., grains, fruits, starch).
+- Proteins: Essential macromolecules composed of amino acids required for muscle growth, tissue repair, enzyme production, and immune defense.
+- Fats / Lipids: Concentrated energy storage, cellular membrane construction, and vitamin absorption.
+- Vitamins and Minerals: Essential micronutrients (such as Vitamin C, Vitamin D, Iron, Calcium, Zinc) that regulate metabolic pathways and immune health.
+- Water: Makes up approximately 60% of adult body weight, critical for cellular hydration, nutrient transport, and temperature regulation.
+
+[STANDARD UNITS OF MEASUREMENT (SI UNITS)]
+The International System of Units (SI) defines fundamental base units:
+- Length: Meter (m)
+- Mass: Kilogram (kg)
+- Time: Second (s)
+- Electric Current: Ampere (A)
+- Temperature: Kelvin (K) and Celsius (C)
+- Amount of Substance: Mole (mol)
+- Luminous Intensity: Candela (cd)
+
+--------------------------------------------------------------------------------
+7. EVERYDAY TECHNOLOGY & ELECTRONICS
+--------------------------------------------------------------------------------
+
+[SMARTPHONES AND TOUCHSCREENS]
+A smartphone is a handheld mobile computing device integrating cellular telephony with a multi-core processor, high-resolution capacitive touchscreen, operating system, and wireless connectivity. Capacitive touchscreens detect touch by measuring micro-disruptions in the screen's electrostatic field caused by the electrical conductivity of human skin.
+
+[WI-FI AND BLUETOOTH]
+- Wi-Fi: A family of wireless network protocols based on the IEEE 802.11 standards, using radio frequency bands (2.4 GHz, 5 GHz, and 6 GHz) to provide high-speed local area network (LAN) internet access.
+- Bluetooth: A short-range wireless technology standard operating at 2.4 GHz ISM band, designed for direct device-to-device communication (such as pairing wireless headphones, keyboards, and smartwatches over distances up to 10–30 meters).
+
+[GPS (GLOBAL POSITIONING SYSTEM)]
+GPS is a satellite-based radionavigation system owned by the United States government and operated by the United States Space Force. It relies on a constellation of at least 24 satellites orbiting Earth at an altitude of approximately 20,200 km. A GPS receiver calculates its precise latitude, longitude, altitude, and time by trilaterating radio timing signals received from at least four separate satellites simultaneously.
+
+[CLOUD STORAGE AND CLOUD COMPUTING]
+Cloud computing is the on-demand availability of computer system resources—especially data storage (cloud storage) and computing power—over the internet without direct active management by the user. Major cloud providers (such as Amazon Web Services, Google Cloud Platform, and Microsoft Azure) operate hyperscale data centers worldwide.
+
+[WEB BROWSERS AND SEARCH ENGINES]
+- Web Browser: A client application (e.g., Google Chrome, Mozilla Firefox, Apple Safari, Microsoft Edge) that fetches, parses, and renders HTML, CSS, and JavaScript from web servers to display interactive web pages to users.
+- Search Engine: An internet indexing system (e.g., Google Search, Bing) that deploys automated web crawlers (spiders) to scan and index billions of public web pages, using ranking algorithms to retrieve relevant web pages in response to user keyword queries.

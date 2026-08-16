@@ -1,0 +1,28 @@
+================================================================================
+VocaPulse Pro Voice Hub & Smart Microphone — User & Hardware Manual (Model VP-900)
+================================================================================
+
+1. SPECIFICATIONS & SYSTEM ARCHITECTURE
+The VocaPulse VP-900 features an 8-beamforming microphone array with dynamic noise cancellation, real-time spatial acoustic filtering, and a dedicated NPU capable of 12 TOPS for on-device keyword spotting and acoustic preprocessing. 
+- Frequency Response: 20 Hz – 20,000 Hz
+- Acoustic Sensitivity: -26 dBFS ± 3 dB
+- Connectivity: Wi-Fi 6E (802.11ax), Bluetooth 5.3 LE, and USB-C 3.2 Gen 2 (10 Gbps)
+- Power Input: USB-PD 45W Type-C adapter or internal 6000 mAh rechargeable lithium-ion battery offering up to 14 hours of continuous voice querying.
+
+2. HARDWARE SETUP & PAIRING PROCEDURE
+Step 1: Connect the supplied 45W USB-C cable to the power port on the base of the VP-900.
+Step 2: Press and hold the multi-function Power button on the rear panel for 3 seconds until the 360-degree LED halo pulses soft emerald green.
+Step 3: Open the VocaRAG Desktop Suite or mobile companion app, select "Add Device", and confirm the 6-digit pairing code shown on your host screen.
+Step 4: Calibration runs automatically for 15 seconds, measuring room reverberation and ambient noise profiles.
+
+3. LED RING STATUS INDICATORS
+- Solid Emerald Green: System ready, listening mode active.
+- Pulsing Amber: Microphone muted via physical hardware privacy switch.
+- Fast Flashing Magenta: Network handshake in progress or firmware update OTA downloading.
+- Solid Crimson Red: Thermal warning or hardware fault detected (device temperature > 55°C).
+
+4. TROUBLESHOOTING & FACTORY RESET
+If the microphone array fails to register speech input:
+1. Verify that the physical privacy shutter on top of the device is toggled to Open.
+2. Ensure no USB hub or unpowered splitter is placed between the device and host computer.
+3. Perform a Hard Reset: Insert a paperclip into the Pin-hole Reset slot on the bottom plate for 10 seconds until all LEDs flash white three times.

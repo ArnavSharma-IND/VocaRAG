@@ -1,0 +1,21 @@
+================================================================================
+VocaPulse Technologies — Global Employee Handbook (v4.2)
+================================================================================
+
+1. ANNUAL LEAVE & TIME-OFF POLICIES
+All full-time employees are entitled to 24 business days of paid annual leave per calendar year, accrued at the rate of 2 days per full month of employment. In addition, employees receive 10 standard national holidays and 4 floating cultural wellness days. 
+Leave requests exceeding 5 consecutive business days must be submitted via the HR Portal at least 14 calendar days in advance for team lead approval. Up to 5 unused annual leave days may be carried over into the following fiscal year, but must be utilized before March 31st of that year or they will lapse without financial encashment.
+
+2. REMOTE WORK & CORE COLLABORATION HOURS
+VocaPulse operates on a flexible hybrid work model. Team members are expected to be available for synchronous communication during Core Collaboration Hours: 10:00 AM to 3:00 PM in their respective local time zones.
+Employees working remotely from another jurisdiction for longer than 30 consecutive calendar days must obtain prior written approval from the Legal and People Operations departments to ensure tax, immigration, and labor law compliance.
+
+3. HARDWARE & EQUIPMENT SECURITY
+Employees are issued a primary company-managed laptop (MacBook Pro 14" or Dell XPS 15), a YubiKey hardware security key, and an initial $750 home workstation setup stipend. 
+All company machines are enrolled in MDM (Mobile Device Management) and must maintain disk encryption (FileVault / BitLocker) active at all times. Personal software installations requiring administrative privileges must be requested through the IT Service Desk.
+
+4. HEALTH & WELLNESS BENEFITS
+Comprehensive medical, dental, and vision insurance coverage begins on the first calendar day of the month following the hire date. The company covers 100% of employee healthcare premiums and 75% of eligible dependent premiums. A monthly wellness stipend of $120 is provided for fitness memberships, mental health apps, or ergonomics.
+
+5. CODE OF CONDUCT & WHISTLEBLOWER POLICY
+VocaPulse maintains zero tolerance for harassment, discrimination, or retaliatory behavior. All employees are expected to treat colleagues, partners, and customers with dignity. Any suspected violation can be reported anonymously via ethics@vocapulse.internal or through the 24/7 third-party whistleblower hotline at +1-800-555-0199.

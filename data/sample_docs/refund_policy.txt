@@ -1,0 +1,22 @@
+================================================================================
+VocaPulse Technologies — Customer Refund & Return Policy (Rev 2026.1)
+================================================================================
+
+1. STANDARD 30-DAY MONEY-BACK GUARANTEE
+Customers who purchase VocaPulse hardware (including VocaPulse Voice Hub, Microphone Array, and Audio Dock) or annual software subscriptions directly through the official VocaPulse store are eligible for a full refund within 30 calendar days of the delivery date.
+To initiate a refund, the product must be in its original packaging with all included accessories, cables, and power adapters, showing no signs of physical tampering or water damage.
+
+2. SOFTWARE SUBSCRIPTIONS & CANCELLATIONS
+Monthly SaaS licenses may be cancelled at any time through the billing dashboard. The cancellation will take effect at the conclusion of the current billing cycle, and no partial month refunds are issued. Annual enterprise licenses cancelled within the first 14 days of activation will receive a 100% refund, minus a 3% payment processing fee.
+
+3. RESTOCKING FEES & RETURN SHIPPING
+Return shipping costs for defective units or verified warranty claims are 100% covered by VocaPulse via pre-paid return shipping labels. For buyer remorse returns or non-defective product returns initiated after 14 days but within the 30-day window, a standard 10% restocking fee applies, and return shipping is the customer's responsibility.
+
+4. NON-REFUNDABLE ITEMS & EXCEPTIONS
+The following items cannot be returned or refunded:
+- Custom engraved hardware or personalized voice peripherals.
+- Digital downloadable sound packs or developer API token packages that have been redeemed or consumed.
+- Clearance or refurbished items marked as "Final Sale" at checkout.
+
+5. PROCESSING TIMELINE
+Once the returned hardware arrives at our logistics inspection facility, returns are processed and inspected within 3 business days. Approved refunds are credited back to the original method of payment within 5 to 7 banking business days, depending on the card issuer.

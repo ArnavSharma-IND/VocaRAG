@@ -1,0 +1,23 @@
+================================================================================
+VocaPulse Information Security & Device Incident Protocol (SEC-2026)
+================================================================================
+
+1. LOST OR STOLEN HARDWARE PROTOCOL
+If an employee loses their company-issued laptop, mobile phone, or hardware security key (YubiKey), they must immediately take the following actions:
+Step 1: Contact the 24/7 Security Operations Center (SOC) hotline at +1-888-99-SECURE or page #sec-incident on Slack within 60 minutes of noticing the loss.
+Step 2: The SOC will immediately trigger an MDM remote wipe command to purge all local encrypted volumes and revoke active OAuth tokens.
+Step 3: If the device was lost in an airport, hotel, or rideshare, the employee must file a local police report within 24 hours and forward the report case number to sec-ops@vocapulse.internal.
+Step 4: An emergency replacement device will be dispatched via expedited courier within 24 business hours.
+
+2. MULTI-FACTOR AUTHENTICATION (MFA) & PASSWORD MANDATE
+All corporate systems require FIDO2/WebAuthn hardware security keys as the primary MFA mechanism. SMS-based 2FA is strictly prohibited due to SIM-swapping vulnerabilities. Passwords must be at least 16 characters in length and managed via the enterprise 1Password vault.
+
+3. DATA CLASSIFICATION & CONFIDENTIALITY TIERS
+- Tier 1 (Public): Marketing materials, public API documentation, press releases.
+- Tier 2 (Internal): Internal wikis, architectural RFCs, standard employee guidelines.
+- Tier 3 (Confidential): Customer PII, non-public source code, financial projections, RAG knowledge embeddings.
+- Tier 4 (Restricted): Encryption master keys, biometric authentication hashes, executive compensation tables.
+Tier 3 and Tier 4 data must never be transferred to unapproved third-party cloud services or public LLMs.
+
+4. PHISHING RESPONSE & REPORTING
+Any suspicious email or Slack message must be flagged using the "Report Phish" button in Outlook/Gmail. Employees who inadvertently click a suspicious link must immediately disconnect from Wi-Fi/VPN and notify the SOC.
