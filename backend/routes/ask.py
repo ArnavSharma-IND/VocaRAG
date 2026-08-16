@@ -11,6 +11,7 @@ async def ask_question(request: QueryRequest):
     """
     Core Voice-to-Answer RAG endpoint.
     Accepts text or voice transcript, executes guardrails, FAISS retrieval, and grounded answer generation.
+    Supports collection-based routing ('enterprise' or 'msmarco').
     """
     try:
         response = await rag_pipeline.process_query(request)
