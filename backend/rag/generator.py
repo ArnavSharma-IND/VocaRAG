@@ -186,16 +186,20 @@ class LLMGenerator:
         """
         High-precision deterministic grounded synthesis for Demo Mode.
         Extracts clean, informative factual sentences directly from matching context passages.
+        If token coverage is insufficient, cleanly abstains without hallucinating.
         """
         context_match = re.search(r"CONTEXT PASSAGES:\s*(.*?)\s*USER QUESTION:\s*(.*?)\s*GROUNDED ANSWER", prompt, re.DOTALL)
         if not context_match:
-            return "The requested information was located in the primary source document [Source 1]."
+            return "I cannot find enough information in the provided context to answer this question."
 
         context_str = context_match.group(1)
         query_str = context_match.group(2).strip().lower()
 
-        stop_words = {"what", "is", "the", "how", "many", "to", "a", "an", "for", "of", "in", "and", "or", "can", "do", "should", "i", "my", "tell", "me", "about", "who", "why", "does", "it"}
-        query_tokens = [w for w in re.findall(r'\b[a-z0-9]+\b', query_str) if w not in stop_words and len(w) > 2]
+        stop_words = {"what", "is", "the", "how", "many", "to", "a", "an", "for", "of", "in", "and", "or", "can", "do", "should", "i", "my", "tell", "me", "about", "who", "why", "does", "it", "called"}
+        query_tokens = [w for w in re.findall(r'\b[a-z0-9\u0900-\u0DFF\u0C00-\u0C7F]+\b', query_str) if w not in stop_words and len(w) > 2]
+        
+        if not query_tokens:
+            query_tokens = [w for w in re.findall(r'\b\w+\b', query_str) if len(w) > 2]
 
         sources_raw = re.split(r'---\s*\[Source\s*(\d+):([^\]]+)\]\s*---', context_str)
         extracted_facts = []
@@ -226,27 +230,32 @@ class LLMGenerator:
                     continue
                 
                 s_lower = s_clean.lower()
-                matches = sum(1 for token in query_tokens if token in s_lower)
-                distinct_matches = len(set(token for token in query_tokens if token in s_lower))
+                matching_tokens = [token for token in query_tokens if token in s_lower]
+                distinct_matches = len(set(matching_tokens))
+                coverage = distinct_matches / len(query_tokens) if query_tokens else 0.0
                 
-                if matches > 0:
-                    score = matches + (distinct_matches * 2)
-                    if any(c.isdigit() or c in "$%#" for c in s_clean):
-                        score += 1
-                    extracted_facts.append((score, f"{s_clean} [Source {src_num}]"))
+                # Check for sufficient keyword coverage
+                if query_tokens:
+                    if len(query_tokens) == 1 and distinct_matches < 1:
+                        continue
+                    elif len(query_tokens) == 2 and distinct_matches < 1:
+                        continue
+                    elif len(query_tokens) >= 3 and (distinct_matches < 2 or coverage < 0.40):
+                        continue
 
-        extracted_facts.sort(key=lambda x: x[0], reverse=True)
+                score = len(matching_tokens) + (distinct_matches * 3)
+                if any(c.isdigit() or c in "$%#" for c in s_clean):
+                    score += 1
+                extracted_facts.append((score, coverage, f"{s_clean} [Source {src_num}]"))
+
+        # Sort facts by score descending
+        extracted_facts.sort(key=lambda x: (x[0], x[1]), reverse=True)
 
         if not extracted_facts:
-            if len(sources_raw) > 3:
-                for line in sources_raw[3].splitlines():
-                    l = line.strip()
-                    if len(l) > 30 and not l.startswith("===") and not l.startswith("VOCARAG") and not l.startswith("VocaPulse"):
-                        l_sub = re.sub(r'\[.*?\]', '', l).strip()
-                        return f"{l_sub.split('.')[0]}. [Source 1]"
-            return "The requested information was located in the primary source document [Source 1]."
+            return "I cannot find enough information in the provided context to answer this question."
 
-        selected = [f[1] for f in extracted_facts[:2]]
+        # Pick top 2 most relevant sentences
+        selected = [f[2] for f in extracted_facts[:2]]
         unique_selected = []
         for item in selected:
             if item not in unique_selected:
