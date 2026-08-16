@@ -1,19 +1,29 @@
 import re
 import hashlib
+import logging
 from typing import List, Dict, Any
 from backend.models.schemas import ChunkInfo
 
-def generate_chunk_id(doc_id: str, index: int, content: str) -> str:
-    hash_str = hashlib.md5(f"{doc_id}_{index}_{content[:50]}".encode("utf-8")).hexdigest()[:8]
-    return f"{doc_id}_c{index}_{hash_str}"
+logger = logging.getLogger(__name__)
+
+
+def generate_chunk_id(doc_id: str, chunk_index: int, content: str) -> str:
+    content_hash = hashlib.md5(content[:200].encode("utf-8")).hexdigest()[:8]
+    return f"{doc_id}_chunk{chunk_index}_{content_hash}"
+
 
 class ChunkingEngine:
-    """
-    Implements multiple configurable text chunking strategies for VocaRAG:
-    1. Fixed-Size Chunking with Overlap
-    2. Sentence-Based Chunking with Overlap
-    3. Recursive Character Chunking
-    """
+
+    @staticmethod
+    def _split_into_sentences(text: str) -> List[str]:
+        sentence_end = re.compile(r'(?<=[.!?])\s+')
+        raw_sentences = sentence_end.split(text.strip())
+        sentences = []
+        for s in raw_sentences:
+            s_clean = s.strip()
+            if s_clean:
+                sentences.append(s_clean)
+        return sentences
 
     @staticmethod
     def chunk_fixed(
@@ -24,31 +34,27 @@ class ChunkingEngine:
         chunk_overlap: int = 80,
         metadata: Dict[str, Any] = None
     ) -> List[ChunkInfo]:
-        """Fixed character size chunking respecting word boundaries where possible."""
+        """Fixed-size chunking with word-boundary snapping."""
         metadata = metadata or {}
-        cleaned_text = re.sub(r'\s+', ' ', text).strip()
-        if not cleaned_text:
-            return []
-
         chunks: List[ChunkInfo] = []
+        text = text.strip()
+        if not text:
+            return chunks
+
         start = 0
-        text_len = len(cleaned_text)
         index = 0
 
-        while start < text_len:
-            end = min(start + chunk_size, text_len)
+        while start < len(text):
+            end = start + chunk_size
+            if end < len(text):
+                space_pos = text.rfind(" ", start, end)
+                if space_pos > start:
+                    end = space_pos + 1
             
-            # If not at the end of text, find the nearest space to avoid cutting words
-            if end < text_len:
-                space_pos = cleaned_text.rfind(' ', start + int(chunk_size * 0.7), end)
-                if space_pos != -1 and space_pos > start:
-                    end = space_pos
-
-            chunk_content = cleaned_text[start:end].strip()
+            chunk_content = text[start:end].strip()
             if chunk_content:
-                chunk_id = generate_chunk_id(doc_id, index, chunk_content)
                 chunks.append(ChunkInfo(
-                    id=chunk_id,
+                    id=generate_chunk_id(doc_id, index, chunk_content),
                     doc_id=doc_id,
                     doc_name=doc_name,
                     chunk_index=index,
@@ -57,33 +63,17 @@ class ChunkingEngine:
                     metadata={
                         **metadata,
                         "strategy": "fixed",
-                        "start_char": start,
-                        "end_char": end,
-                        "chunk_size_setting": chunk_size,
-                        "overlap_setting": chunk_overlap
+                        "start_offset": start,
+                        "end_offset": end
                     }
                 ))
                 index += 1
-
-            if end >= text_len:
-                break
             
-            start = max(end - chunk_overlap, start + 1)
+            start = end - chunk_overlap
+            if start >= len(text):
+                break
 
         return chunks
-
-    @staticmethod
-    def _split_into_sentences(text: str) -> List[str]:
-        """Splits text into sentences while avoiding false positives on abbreviations/decimals."""
-        # Clean multiple spaces while preserving punctuation
-        sentence_end = re.compile(r'(?<=[.!?])\s+(?=[A-Z0-9"\'\(\[])')
-        raw_sentences = sentence_end.split(text.strip())
-        sentences = []
-        for s in raw_sentences:
-            s_clean = s.strip()
-            if s_clean:
-                sentences.append(s_clean)
-        return sentences
 
     @staticmethod
     def chunk_sentence(
@@ -107,7 +97,6 @@ class ChunkingEngine:
 
         for s in sentences:
             s_len = len(s)
-            # If a single sentence exceeds chunk_size, split it fixed
             if s_len > chunk_size and not current_sentences:
                 sub_chunks = ChunkingEngine.chunk_fixed(s, doc_id, doc_name, chunk_size, chunk_overlap, metadata)
                 for sc in sub_chunks:
@@ -119,7 +108,6 @@ class ChunkingEngine:
                 continue
 
             if current_len + s_len + 1 > chunk_size and current_sentences:
-                # Flush current chunk
                 chunk_content = " ".join(current_sentences).strip()
                 chunks.append(ChunkInfo(
                     id=generate_chunk_id(doc_id, index, chunk_content),
@@ -136,7 +124,6 @@ class ChunkingEngine:
                 ))
                 index += 1
 
-                # Calculate overlap sentences
                 overlap_sentences = []
                 overlap_len = 0
                 for prev_s in reversed(current_sentences):
@@ -181,8 +168,7 @@ class ChunkingEngine:
     ) -> List[ChunkInfo]:
         """
         Recursive hierarchical chunking:
-        Splits by paragraphs (\n\n), then lines (\n), then sentences (. ), then words.
-        Ensures optimal semantic boundaries with sliding overlap.
+        Splits by paragraphs, then lines, then sentences, then words.
         """
         metadata = metadata or {}
         separators = ["\n\n", "\n", ". ", "? ", "! ", " ", ""]
@@ -195,7 +181,6 @@ class ChunkingEngine:
 
             sep = seps[0]
             if sep == "":
-                # Hard character slice
                 return [t[i:i + chunk_size] for i in range(0, len(t), chunk_size - chunk_overlap)]
 
             if sep in [". ", "? ", "! "]:
@@ -216,7 +201,6 @@ class ChunkingEngine:
 
         raw_pieces = _split_text(text, separators)
         
-        # Merge pieces up to chunk_size with overlap
         chunks: List[ChunkInfo] = []
         current_pieces: List[str] = []
         current_len = 0
@@ -241,7 +225,6 @@ class ChunkingEngine:
                 ))
                 index += 1
 
-                # Overlap calculation
                 overlap_pieces = []
                 overlap_len = 0
                 for prev_p in reversed(current_pieces):
@@ -275,6 +258,117 @@ class ChunkingEngine:
 
         return chunks
 
+    @staticmethod
+    def chunk_semantic(
+        text: str,
+        doc_id: str,
+        doc_name: str,
+        chunk_size: int = 450,
+        chunk_overlap: int = 80,
+        metadata: Dict[str, Any] = None,
+        similarity_threshold: float = 0.5
+    ) -> List[ChunkInfo]:
+        """
+        Semantic chunking: splits at topic boundaries detected by embedding similarity.
+        1. Split text into sentences.
+        2. Embed each sentence.
+        3. Break where consecutive-sentence cosine similarity drops below threshold.
+        4. Merge resulting segments up to chunk_size.
+        """
+        metadata = metadata or {}
+        sentences = ChunkingEngine._split_into_sentences(text)
+        
+        if len(sentences) < 3:
+            return ChunkingEngine.chunk_recursive(
+                text, doc_id, doc_name, chunk_size, chunk_overlap, metadata
+            )
+
+        # Lazy import to avoid circular dependency
+        from backend.rag.embeddings import embedding_engine
+        import numpy as np
+
+        try:
+            embeddings = embedding_engine.embed_texts(sentences)
+        except Exception as e:
+            logger.warning(f"Semantic chunking embedding failed: {e}. Falling back to recursive.")
+            return ChunkingEngine.chunk_recursive(
+                text, doc_id, doc_name, chunk_size, chunk_overlap, metadata
+            )
+
+        # Compute cosine similarities between consecutive sentences
+        similarities = []
+        for i in range(len(embeddings) - 1):
+            sim = float(np.dot(embeddings[i], embeddings[i + 1]))
+            similarities.append(sim)
+
+        # Find break points where similarity drops below threshold
+        break_points = [0]
+        for i, sim in enumerate(similarities):
+            if sim < similarity_threshold:
+                break_points.append(i + 1)
+        break_points.append(len(sentences))
+
+        # Build segments from break points
+        segments = []
+        for i in range(len(break_points) - 1):
+            start_idx = break_points[i]
+            end_idx = break_points[i + 1]
+            segment_text = " ".join(sentences[start_idx:end_idx]).strip()
+            if segment_text:
+                segments.append(segment_text)
+
+        # Merge segments up to chunk_size
+        chunks: List[ChunkInfo] = []
+        current_segments: List[str] = []
+        current_len = 0
+        index = 0
+
+        for seg in segments:
+            seg_len = len(seg)
+            if current_len + seg_len + 1 > chunk_size and current_segments:
+                chunk_content = " ".join(current_segments).strip()
+                chunks.append(ChunkInfo(
+                    id=generate_chunk_id(doc_id, index, chunk_content),
+                    doc_id=doc_id,
+                    doc_name=doc_name,
+                    chunk_index=index,
+                    content=chunk_content,
+                    char_count=len(chunk_content),
+                    metadata={
+                        **metadata,
+                        "strategy": "semantic",
+                        "segment_count": len(current_segments),
+                        "similarity_threshold": similarity_threshold
+                    }
+                ))
+                index += 1
+                current_segments = [seg]
+                current_len = seg_len
+            else:
+                current_segments.append(seg)
+                current_len += seg_len + 1
+
+        if current_segments:
+            chunk_content = " ".join(current_segments).strip()
+            chunks.append(ChunkInfo(
+                id=generate_chunk_id(doc_id, index, chunk_content),
+                doc_id=doc_id,
+                doc_name=doc_name,
+                chunk_index=index,
+                content=chunk_content,
+                char_count=len(chunk_content),
+                metadata={
+                    **metadata,
+                    "strategy": "semantic",
+                    "segment_count": len(current_segments),
+                    "similarity_threshold": similarity_threshold
+                }
+            ))
+
+        return chunks if chunks else ChunkingEngine.chunk_recursive(
+            text, doc_id, doc_name, chunk_size, chunk_overlap, metadata
+        )
+
     @classmethod
     def chunk_document(
         cls,
@@ -291,5 +385,7 @@ class ChunkingEngine:
             return cls.chunk_fixed(text, doc_id, doc_name, chunk_size, chunk_overlap, metadata)
         elif strategy == "sentence":
             return cls.chunk_sentence(text, doc_id, doc_name, chunk_size, chunk_overlap, metadata)
+        elif strategy == "semantic":
+            return cls.chunk_semantic(text, doc_id, doc_name, chunk_size, chunk_overlap, metadata)
         else:
             return cls.chunk_recursive(text, doc_id, doc_name, chunk_size, chunk_overlap, metadata)

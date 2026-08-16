@@ -1,431 +1,243 @@
 import React, { useState, useEffect } from 'react';
-import {
-  BookOpen,
-  Upload,
-  Trash2,
-  RefreshCw,
-  FileText,
-  CheckCircle2,
-  Sliders,
-  AlertCircle,
-  Eye,
-} from 'lucide-react';
-import type { DocumentInfo, KnowledgeBaseStats, ChunkInfo } from '../types';
+import { Upload, Trash2, RefreshCw, Database, Layers, Globe } from 'lucide-react';
 import { api } from '../services/api';
+import type { DocumentInfo, KnowledgeBaseStats } from '../types';
 
 export const KnowledgeBasePage: React.FC = () => {
+  const [collection, setCollection] = useState<string>('msmarco');
   const [documents, setDocuments] = useState<DocumentInfo[]>([]);
   const [stats, setStats] = useState<KnowledgeBaseStats | null>(null);
-  const [chunks, setChunks] = useState<ChunkInfo[]>([]);
-  const [selectedDocId, setSelectedDocId] = useState<string>('');
-  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isReindexing, setIsReindexing] = useState<boolean>(false);
-  const [feedbackMessage, setFeedbackMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-
-  // Chunking parameters
-  const [strategy, setStrategy] = useState<'recursive' | 'fixed' | 'sentence'>('recursive');
+  const [selectedStrategy, setSelectedStrategy] = useState<string>('recursive');
   const [chunkSize, setChunkSize] = useState<number>(450);
   const [chunkOverlap, setChunkOverlap] = useState<number>(80);
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    loadData(collection);
+  }, [collection]);
 
-  const loadData = async () => {
+  const loadData = async (col: string) => {
+    setIsLoading(true);
     try {
-      const [docsData, statsData, chunksData] = await Promise.all([
-        api.getDocuments(),
-        api.getKnowledgeBaseStats(),
-        api.getChunks(undefined, 20),
+      const [docs, st] = await Promise.all([
+        api.getDocuments(col),
+        api.getKnowledgeBaseStats(col)
       ]);
-      setDocuments(docsData);
-      setStats(statsData);
-      setChunks(chunksData);
-      if (statsData) {
-        setStrategy((statsData.chunking_strategy as any) || 'recursive');
-        setChunkSize(statsData.chunk_size || 450);
-        setChunkOverlap(statsData.chunk_overlap || 80);
+      setDocuments(docs);
+      setStats(st);
+      if (st) {
+        setSelectedStrategy(st.chunking_strategy);
+        setChunkSize(st.chunk_size);
+        setChunkOverlap(st.chunk_overlap);
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to load KB data:', err);
-      setFeedbackMessage({ type: 'error', text: err.message || 'Failed to connect to backend.' });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    setIsUploading(true);
-    setFeedbackMessage(null);
-
+    setUploadStatus(`Uploading and indexing ${file.name}...`);
     try {
-      for (let i = 0; i < files.length; i++) {
-        await api.uploadDocument(files[i]);
-      }
-      setFeedbackMessage({
-        type: 'success',
-        text: `Uploaded and indexed ${files.length} document(s).`,
-      });
-      await loadData();
+      await api.uploadDocument(file, collection);
+      setUploadStatus(`Successfully uploaded and indexed ${file.name}!`);
+      loadData(collection);
     } catch (err: any) {
-      setFeedbackMessage({ type: 'error', text: err.message || 'Upload failed.' });
-    } finally {
-      setIsUploading(false);
-      e.target.value = '';
+      setUploadStatus(`Upload failed: ${err.message}`);
     }
   };
 
-  const handleDeleteDocument = async (docId: string, docName: string) => {
-    if (!confirm(`Are you sure you want to delete '${docName}'?`)) return;
+  const handleDelete = async (docId: string) => {
     try {
-      await api.deleteDocument(docId);
-      setFeedbackMessage({ type: 'success', text: `Document '${docName}' deleted.` });
-      await loadData();
-    } catch (err: any) {
-      setFeedbackMessage({ type: 'error', text: err.message || 'Delete failed.' });
+      await api.deleteDocument(docId, collection);
+      loadData(collection);
+    } catch (err) {
+      console.error('Failed to delete document:', err);
     }
   };
 
   const handleReindex = async () => {
     setIsReindexing(true);
-    setFeedbackMessage(null);
     try {
       const newStats = await api.reindexKnowledgeBase({
-        chunk_strategy: strategy,
+        chunk_strategy: selectedStrategy,
         chunk_size: chunkSize,
-        chunk_overlap: chunkOverlap,
-      });
+        chunk_overlap: chunkOverlap
+      }, collection);
       setStats(newStats);
-      const updatedChunks = await api.getChunks(selectedDocId || undefined, 20);
-      setChunks(updatedChunks);
-      const updatedDocs = await api.getDocuments();
-      setDocuments(updatedDocs);
-      setFeedbackMessage({
-        type: 'success',
-        text: `Reindexed corpus using ${strategy.toUpperCase()} strategy (${newStats.chunks_count} chunks generated).`,
-      });
-    } catch (err: any) {
-      setFeedbackMessage({ type: 'error', text: err.message || 'Reindexing failed.' });
+      loadData(collection);
+    } catch (err) {
+      console.error('Reindex failed:', err);
     } finally {
       setIsReindexing(false);
     }
   };
 
-  const handleFilterChunksByDoc = async (docId: string) => {
-    setSelectedDocId(docId);
-    try {
-      const data = await api.getChunks(docId || undefined, 30);
-      setChunks(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 font-mono">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+      {/* Top Header & Collection Toggle */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[rgba(243,235,221,0.12)] pb-6">
         <div>
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-[#111311] border border-[rgba(243,235,221,0.12)] text-[#C9C2B5] text-[10px] uppercase tracking-widest mb-2">
-            <BookOpen className="w-3 h-3 text-[#1C563E]" />
-            <span>EVIDENCE LAYER MANAGEMENT</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#F3EBDD] font-mono tracking-tight">
-            KNOWLEDGE BASE
-          </h1>
-          <p className="text-xs text-[#858983] mt-1 font-sans">
-            Manage the evidence layer behind VocaRAG. Configure multi-strategy chunking algorithms and rebuild FAISS index.
+          <h1 className="text-2xl font-bold font-editorial text-[#F3EBDD]">Knowledge Base & Index Studio</h1>
+          <p className="text-xs text-[#858983] mt-1 font-mono">
+            Manage multi-format documents, chunking strategies, and FAISS vector indices.
           </p>
         </div>
 
-        {/* Upload Button */}
-        <label className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-[#F3EBDD] hover:bg-[#FFFFFF] text-[#080908] text-xs font-semibold cursor-pointer transition-all hover-lift shadow-md">
-          <Upload className="w-3.5 h-3.5 text-[#123B2A]" />
-          <span>{isUploading ? 'UPLOADING...' : 'UPLOAD DOCUMENT'}</span>
-          <input
-            type="file"
-            multiple
-            accept=".txt,.pdf,.docx,.doc,.md"
-            onChange={handleFileUpload}
-            disabled={isUploading}
-            className="hidden"
-          />
-        </label>
+        {/* Collection Selector */}
+        <div className="inline-flex p-1 bg-[#111311] rounded-xl border border-[rgba(243,235,221,0.12)]">
+          <button
+            onClick={() => setCollection('msmarco')}
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              collection === 'msmarco' ? 'bg-[#1C563E] text-[#F3EBDD]' : 'text-[#858983] hover:text-[#F3EBDD]'
+            }`}
+          >
+            <Globe className="w-3.5 h-3.5" />
+            <span>Indic MSMARCO-XI</span>
+          </button>
+          <button
+            onClick={() => setCollection('enterprise')}
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              collection === 'enterprise' ? 'bg-[#1C563E] text-[#F3EBDD]' : 'text-[#858983] hover:text-[#F3EBDD]'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>Enterprise Policies</span>
+          </button>
+        </div>
       </div>
 
-      {/* Feedback Banner */}
-      {feedbackMessage && (
-        <div
-          className={`p-3.5 rounded-2xl mb-6 flex items-center space-x-3 text-xs ${
-            feedbackMessage.type === 'success'
-              ? 'bg-[#123B2A]/40 text-[#A8D5BA] border border-[#1C563E]'
-              : 'bg-[#D58A8A]/10 text-[#D58A8A] border border-[#D58A8A]/30'
-          }`}
-        >
-          {feedbackMessage.type === 'success' ? (
-            <CheckCircle2 className="w-4 h-4 text-[#A8D5BA] flex-shrink-0" />
-          ) : (
-            <AlertCircle className="w-4 h-4 text-[#D58A8A] flex-shrink-0" />
-          )}
-          <span>{feedbackMessage.text}</span>
+      {/* Stats Cards */}
+      {stats && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 font-mono">
+          <div className="p-4 rounded-2xl bg-[#111311] border border-[rgba(243,235,221,0.1)]">
+            <span className="text-[10px] text-[#858983] uppercase tracking-wider">DOCUMENTS</span>
+            <p className="text-xl font-bold text-[#F3EBDD] mt-1">{stats.documents_count}</p>
+          </div>
+          <div className="p-4 rounded-2xl bg-[#111311] border border-[rgba(243,235,221,0.1)]">
+            <span className="text-[10px] text-[#858983] uppercase tracking-wider">CHUNKS</span>
+            <p className="text-xl font-bold text-[#A8D5BA] mt-1">{stats.chunks_count}</p>
+          </div>
+          <div className="p-4 rounded-2xl bg-[#111311] border border-[rgba(243,235,221,0.1)]">
+            <span className="text-[10px] text-[#858983] uppercase tracking-wider">FAISS VECTORS</span>
+            <p className="text-xl font-bold text-[#D9C48A] mt-1">{stats.embeddings_count}</p>
+          </div>
+          <div className="p-4 rounded-2xl bg-[#111311] border border-[rgba(243,235,221,0.1)]">
+            <span className="text-[10px] text-[#858983] uppercase tracking-wider">DIMENSION</span>
+            <p className="text-xl font-bold text-[#F3EBDD] mt-1">{stats.embedding_dimension}D</p>
+          </div>
         </div>
       )}
 
-      {/* Large Minimal Drop Zone */}
-      <div className="mb-8 p-8 sm:p-10 rounded-3xl bg-[#111311] border-2 border-dashed border-[rgba(243,235,221,0.14)] hover:border-[#1C563E] text-center transition-colors relative">
-        <Upload className="w-8 h-8 text-[#858983] mx-auto mb-3" />
-        <h3 className="text-sm font-bold uppercase tracking-widest text-[#F3EBDD] mb-1">
-          DROP DOCUMENTS HERE
-        </h3>
-        <p className="text-[11px] text-[#858983] max-w-sm mx-auto mb-4 font-sans">
-          Upload internal policy docs, manuals, handbooks, or general encyclopedias to expand vector grounding.
-        </p>
-        <div className="flex justify-center space-x-2 text-[10px] text-[#C9C2B5]">
-          <span className="px-2 py-0.5 rounded bg-[#171A17] border border-[rgba(243,235,221,0.08)]">PDF</span>
-          <span className="px-2 py-0.5 rounded bg-[#171A17] border border-[rgba(243,235,221,0.08)]">TXT</span>
-          <span className="px-2 py-0.5 rounded bg-[#171A17] border border-[rgba(243,235,221,0.08)]">DOCX</span>
-          <span className="px-2 py-0.5 rounded bg-[#171A17] border border-[rgba(243,235,221,0.08)]">MD</span>
-        </div>
-      </div>
+      {/* Reindexing Controls */}
+      <div className="p-6 rounded-2xl bg-[#111311] border border-[rgba(243,235,221,0.12)] space-y-4">
+        <h2 className="text-sm font-semibold text-[#F3EBDD] uppercase tracking-wider font-mono flex items-center space-x-2">
+          <Database className="w-4 h-4 text-[#A8D5BA]" />
+          <span>Chunking Strategy & Parameter Studio</span>
+        </h2>
 
-      {/* Live Technical Stats Readouts */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8">
-        <div className="p-4 rounded-2xl bg-[#111311] border border-[rgba(243,235,221,0.12)]">
-          <span className="text-[9px] font-bold uppercase tracking-widest text-[#858983] block mb-1">
-            DOCUMENTS
-          </span>
-          <span className="text-2xl font-bold text-[#F3EBDD]">
-            {stats?.documents_count ?? documents.length}
-          </span>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-[#111311] border border-[rgba(243,235,221,0.12)]">
-          <span className="text-[9px] font-bold uppercase tracking-widest text-[#858983] block mb-1">
-            CHUNKS
-          </span>
-          <span className="text-2xl font-bold text-[#F3EBDD]">
-            {stats?.chunks_count ?? 0}
-          </span>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-[#111311] border border-[rgba(243,235,221,0.12)]">
-          <span className="text-[9px] font-bold uppercase tracking-widest text-[#858983] block mb-1">
-            EMBEDDINGS
-          </span>
-          <span className="text-2xl font-bold text-[#F3EBDD]">
-            {stats?.embeddings_count ?? 0}
-          </span>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-[#111311] border border-[rgba(243,235,221,0.12)]">
-          <span className="text-[9px] font-bold uppercase tracking-widest text-[#858983] block mb-1">
-            INDEX STATUS
-          </span>
-          <span className="text-sm font-bold text-[#A8D5BA] flex items-center space-x-1.5 mt-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#1C563E] animate-pulse" />
-            <span>READY</span>
-          </span>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Col: Refined Chunking Controls */}
-        <div className="lg:col-span-1 bg-[#111311] rounded-3xl p-6 border border-[rgba(243,235,221,0.14)] h-fit">
-          <div className="flex items-center space-x-2 pb-3 border-b border-[rgba(243,235,221,0.1)] mb-5">
-            <Sliders className="w-4 h-4 text-[#1C563E]" />
-            <h3 className="font-bold text-[#F3EBDD] text-xs uppercase tracking-widest">
-              CHUNKING STRATEGY
-            </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label className="text-xs text-[#858983] block mb-1 font-mono">Strategy:</label>
+            <select
+              value={selectedStrategy}
+              onChange={(e) => setSelectedStrategy(e.target.value)}
+              className="w-full px-3 py-2 bg-[#171A17] text-[#F3EBDD] rounded-xl border border-[rgba(243,235,221,0.14)] text-xs focus:outline-none"
+            >
+              <option value="recursive">Recursive Hierarchical (Default)</option>
+              <option value="semantic">Semantic (Embedding-Similarity)</option>
+              <option value="sentence">Sentence Grouping</option>
+              <option value="fixed">Fixed-Size Word Snapping</option>
+            </select>
           </div>
 
-          {/* Segmented Controls */}
-          <div className="mb-5">
-            <label className="block text-[10px] uppercase tracking-widest text-[#858983] mb-2">
-              ALGORITHM
-            </label>
-            <div className="grid grid-cols-3 gap-1.5 p-1 bg-[#080908] rounded-xl border border-[rgba(243,235,221,0.1)]">
-              {(['fixed', 'sentence', 'recursive'] as const).map((strat) => (
-                <button
-                  key={strat}
-                  type="button"
-                  onClick={() => setStrategy(strat)}
-                  className={`py-1.5 px-2 rounded-lg text-[10px] uppercase tracking-wider font-semibold transition-all ${
-                    strategy === strat
-                      ? 'bg-[#171A17] text-[#F3EBDD] border border-[rgba(243,235,221,0.2)]'
-                      : 'text-[#858983] hover:text-[#F3EBDD]'
-                  }`}
-                >
-                  {strat}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Chunk Size Slider */}
-          <div className="mb-5">
-            <div className="flex items-center justify-between text-xs text-[#C9C2B5] mb-2">
-              <span className="text-[10px] uppercase tracking-widest text-[#858983]">CHUNK SIZE</span>
-              <span className="text-[#A8D5BA]">{chunkSize} chars</span>
-            </div>
+          <div>
+            <label className="text-xs text-[#858983] block mb-1 font-mono">Chunk Size (chars):</label>
             <input
-              type="range"
-              min="150"
-              max="1000"
-              step="50"
+              type="number"
               value={chunkSize}
-              onChange={(e) => setChunkSize(Number(e.target.value))}
-              className="w-full accent-[#1C563E]"
+              onChange={(e) => setChunkSize(parseInt(e.target.value) || 450)}
+              className="w-full px-3 py-2 bg-[#171A17] text-[#F3EBDD] rounded-xl border border-[rgba(243,235,221,0.14)] text-xs focus:outline-none font-mono"
             />
           </div>
 
-          {/* Overlap Slider */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between text-xs text-[#C9C2B5] mb-2">
-              <span className="text-[10px] uppercase tracking-widest text-[#858983]">OVERLAP</span>
-              <span className="text-[#A8D5BA]">{chunkOverlap} chars</span>
-            </div>
+          <div>
+            <label className="text-xs text-[#858983] block mb-1 font-mono">Overlap (chars):</label>
             <input
-              type="range"
-              min="0"
-              max="250"
-              step="10"
+              type="number"
               value={chunkOverlap}
-              onChange={(e) => setChunkOverlap(Number(e.target.value))}
-              className="w-full accent-[#1C563E]"
+              onChange={(e) => setChunkOverlap(parseInt(e.target.value) || 80)}
+              className="w-full px-3 py-2 bg-[#171A17] text-[#F3EBDD] rounded-xl border border-[rgba(243,235,221,0.14)] text-xs focus:outline-none font-mono"
             />
           </div>
-
-          {/* Re-Index Trigger */}
-          <button
-            onClick={handleReindex}
-            disabled={isReindexing}
-            className="w-full flex items-center justify-center space-x-2 py-2.5 rounded-xl bg-[#171A17] hover:bg-[#1E231E] text-[#F3EBDD] border border-[rgba(243,235,221,0.18)] text-xs font-semibold transition-all disabled:opacity-40"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 text-[#A8D5BA] ${isReindexing ? 'animate-spin' : ''}`} />
-            <span>{isReindexing ? 'REBUILDING INDEX...' : 'RE-INDEX KNOWLEDGE BASE'}</span>
-          </button>
         </div>
 
-        {/* Right 2 Cols: Document List & Chunk Explorer */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Documents Table */}
-          <div className="bg-[#111311] rounded-3xl p-6 border border-[rgba(243,235,221,0.14)] shadow-xl overflow-hidden">
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-[rgba(243,235,221,0.08)]">
-              <h3 className="font-bold text-xs uppercase tracking-widest text-[#858983]">
-                INDEXED DOCUMENTS ({documents.length})
-              </h3>
-              <span className="text-[10px] text-[#858983]">FAISS INDEXED</span>
-            </div>
+        <button
+          onClick={handleReindex}
+          disabled={isReindexing}
+          className="flex items-center space-x-2 px-4 py-2 bg-[#1C563E] hover:bg-[#256F50] text-[#F3EBDD] rounded-xl text-xs font-semibold transition-all disabled:opacity-50"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${isReindexing ? 'animate-spin' : ''}`} />
+          <span>{isReindexing ? 'REINDEXING CORPUS...' : 'REBUILD VECTOR INDEX'}</span>
+        </button>
+      </div>
 
-            {documents.length === 0 ? (
-              <div className="p-8 text-center text-[#858983] text-xs">
-                NO DOCUMENTS INDEXED. Upload a document to create your evidence layer.
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="text-[10px] uppercase tracking-wider text-[#858983] border-b border-[rgba(243,235,221,0.08)] pb-2">
-                    <tr>
-                      <th className="py-2 px-3">DOCUMENT</th>
-                      <th className="py-2 px-3">TYPE</th>
-                      <th className="py-2 px-3">CHUNKS</th>
-                      <th className="py-2 px-3">STATUS</th>
-                      <th className="py-2 px-3 text-right">ACTIONS</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[rgba(243,235,221,0.06)]">
-                    {documents.map((doc) => {
-                      const isGK = doc.name.toLowerCase().startsWith('general_knowledge') || doc.category_badge === 'GENERAL';
-                      return (
-                        <tr key={doc.id} className="hover:bg-[#171A17]/60 transition-colors">
-                          <td className="py-3 px-3 text-[#F3EBDD] font-medium flex items-center space-x-2">
-                            <FileText className="w-3.5 h-3.5 text-[#1C563E] flex-shrink-0" />
-                            <span className="truncate max-w-xs">{doc.name}</span>
-                          </td>
-                          <td className="py-3 px-3">
-                            {isGK ? (
-                              <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-[#123B2A] text-[#A8D5BA] border border-[#1C563E]">
-                                GENERAL
-                              </span>
-                            ) : doc.is_sample ? (
-                              <span className="px-2 py-0.5 rounded text-[9px] font-medium bg-[#171A17] text-[#C9C2B5] border border-[rgba(243,235,221,0.12)]">
-                                SAMPLE
-                              </span>
-                            ) : (
-                              <span className="px-2 py-0.5 rounded text-[9px] font-medium bg-[#171A17] text-[#D9C48A] border border-[#D9C48A]/30">
-                                UPLOAD
-                              </span>
-                            )}
-                          </td>
-                          <td className="py-3 px-3 text-[#A8D5BA] font-bold">
-                            {doc.chunks_count}
-                          </td>
-                          <td className="py-3 px-3">
-                            <span className="text-[10px] text-[#A8D5BA] font-bold">READY</span>
-                          </td>
-                          <td className="py-3 px-3 text-right space-x-1">
-                            <button
-                              onClick={() => handleFilterChunksByDoc(doc.id)}
-                              title="Inspect Chunks"
-                              className="p-1 text-[#858983] hover:text-[#F3EBDD] transition-colors"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteDocument(doc.id, doc.name)}
-                              title="Delete Document"
-                              className="p-1 text-[#D58A8A] hover:text-red-400 transition-colors"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+      {/* Upload Document */}
+      <div className="p-6 rounded-2xl bg-[#111311] border border-[rgba(243,235,221,0.12)]">
+        <h2 className="text-sm font-semibold text-[#F3EBDD] uppercase tracking-wider font-mono flex items-center space-x-2 mb-3">
+          <Upload className="w-4 h-4 text-[#D9C48A]" />
+          <span>Upload Custom Document to [{collection.toUpperCase()}]</span>
+        </h2>
+        <input
+          type="file"
+          accept=".txt,.pdf,.docx,.md"
+          onChange={handleFileUpload}
+          className="text-xs text-[#858983] file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#171A17] file:text-[#F3EBDD] hover:file:bg-[#1E231E] cursor-pointer"
+        />
+        {uploadStatus && (
+          <p className="mt-2 text-xs text-[#A8D5BA] font-mono">{uploadStatus}</p>
+        )}
+      </div>
 
-          {/* Chunk Preview Explorer */}
-          <div className="bg-[#111311] rounded-3xl p-6 border border-[rgba(243,235,221,0.14)] shadow-xl">
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-[rgba(243,235,221,0.08)]">
-              <h3 className="font-bold text-xs uppercase tracking-widest text-[#858983]">
-                CHUNK EXPLORER {selectedDocId && `(${selectedDocId})`}
-              </h3>
+      {/* Document List */}
+      <div className="p-6 rounded-2xl bg-[#111311] border border-[rgba(243,235,221,0.12)]">
+        <h2 className="text-sm font-semibold text-[#F3EBDD] uppercase tracking-wider font-mono mb-4">
+          Indexed Documents in [{collection.toUpperCase()}] ({documents.length})
+        </h2>
 
-              {selectedDocId && (
-                <button
-                  onClick={() => handleFilterChunksByDoc('')}
-                  className="text-[10px] text-[#A8D5BA] hover:underline"
-                >
-                  SHOW ALL
-                </button>
-              )}
-            </div>
-
-            <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
-              {chunks.map((chk, idx) => (
-                <div
-                  key={chk.id || idx}
-                  className="p-3 rounded-2xl bg-[#080908] border border-[rgba(243,235,221,0.08)] text-xs"
-                >
-                  <div className="flex items-center justify-between text-[#858983] mb-1.5">
-                    <span className="text-[#F3EBDD] font-bold text-[11px]">
-                      {chk.doc_name} • Chunk #{chk.chunk_index}
-                    </span>
-                    <span className="text-[10px] text-[#A8D5BA]">
-                      {chk.char_count} chars
-                    </span>
-                  </div>
-                  <p className="text-[#C9C2B5] leading-relaxed font-sans text-xs">{chk.content}</p>
+        {isLoading ? (
+          <p className="text-xs text-[#858983]">Loading documents...</p>
+        ) : documents.length === 0 ? (
+          <p className="text-xs text-[#858983]">No documents found in this collection.</p>
+        ) : (
+          <div className="divide-y divide-[rgba(243,235,221,0.06)] font-mono text-xs">
+            {documents.map((doc) => (
+              <div key={doc.id} className="py-3 flex items-center justify-between gap-4">
+                <div>
+                  <span className="font-semibold text-[#F3EBDD]">{doc.name}</span>
+                  <span className="ml-2 px-2 py-0.5 rounded text-[9px] bg-[#1C563E]/30 text-[#A8D5BA]">
+                    {doc.category_badge}
+                  </span>
+                  <span className="ml-2 text-[#858983]">({doc.chunks_count} chunks)</span>
                 </div>
-              ))}
-            </div>
+                {!doc.is_sample && (
+                  <button
+                    onClick={() => handleDelete(doc.id)}
+                    className="text-[#D58A8A] hover:text-[#FF9999] p-1"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
