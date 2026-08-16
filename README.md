@@ -1,205 +1,168 @@
-# VocaRAG — Voice-Enabled Retrieval Augmented Generation
+# VocaRAG — Voice-Enabled Multilingual Retrieval-Augmented Generation
 
-> **“Speak a question. Get a grounded answer.”**  
-> *Hackathon / HHGoa'26 — Task #2: Voice-Enabled RAG Model*
+[![CI](https://github.com/ArnavSharma-IND/VocaRAG/actions/workflows/ci.yml/badge.svg)](https://github.com/ArnavSharma-IND/VocaRAG/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com)
+[![React](https://img.shields.io/badge/React-19-61DAFB.svg?logo=react)](https://reactjs.org/)
+[![FAISS](https://img.shields.io/badge/FAISS-Vector%20Store-blue.svg)](https://github.com/facebookresearch/faiss)
+[![Sarvam AI](https://img.shields.io/badge/Sarvam%20AI-Saaras%20v3%20STT-orange.svg)](https://www.sarvam.ai)
+[![Groq LPU](https://img.shields.io/badge/Groq-LPU%20Fast--Path-f55036.svg)](https://groq.com)
 
----
+> **Speak a question in Hindi, Telugu, or English. Get an exact, cited, hallucination-free grounded answer.**
 
-## 1. Problem Statement
-
-Traditional enterprise knowledge retrieval systems force users into friction-heavy manual typing workflows with chatbots that often hallucinate ungrounded facts or fail silently on out-of-scope queries.
-
-**VocaRAG** transforms enterprise knowledge search into an intuitive, high-speed voice experience. By combining browser-native speech recognition with multi-strategy chunking, FAISS normalized vector search, strict hallucination guardrails, automated evidence abstention, and sub-millisecond stage-by-stage latency telemetry, VocaRAG ensures that every spoken question yields a verifiable, cited, and grounded answer.
-
----
-
-## 2. System Architecture
-
-```
-                                  ┌───────────────────────────────┐
-                                  │      Native Browser Mic       │
-                                  │   (Web Speech API + Analyser) │
-                                  └───────────────┬───────────────┘
-                                                  │ Voice Transcript + Latency
-                                                  ▼
-                                  ┌───────────────────────────────┐
-                                  │     FastAPI RAG Pipeline      │
-                                  └───────────────┬───────────────┘
-                                                  │
-              ┌───────────────────────────────────┼───────────────────────────────────┐
-              ▼                                   ▼                                   ▼
-   ┌───────────────────────┐           ┌───────────────────────┐           ┌───────────────────────┐
-   │ 1. Pre-Guardrail Check│           │ 2. Vector Retrieval   │           │ 3. Post-Guardrail &   │
-   │ • Prompt Injection    │           │ • Multi-Chunking:     │           │    Grounded Synthesis │
-   │   (10 heuristic regex)│──[Pass]──>│   Fixed/Sent/Recursive│──[Pass]──>│ • Evidence Threshold  │
-   │ • Out-of-Scope Filter │           │ • all-MiniLM-L6-v2    │           │ • Zero-Hallucination  │
-   │ • Early Block         │           │ • FAISS IndexFlatIP   │           │   Abstention Gate     │
-   └───────────────────────┘           │ • Top-K & Cosine Sim  │           │ • Gemini / OpenAI API │
-              │                        └───────────────────────┘           │ • Cited Sources       │
-              ▼                                                                    └───────────────────────┘
-   [Refusal / Abstention]                                                                      │
-   (Zero downstream cost)                                                                      ▼
-                                                                                   ┌───────────────────────┐
-                                                                                   │ Empirical Benchmarks  │
-                                                                                   │ P50 / P70 / P100 ms   │
-                                                                                   └───────────────────────┘
-```
+Developed for **Hackathon / HHGoa'26 — Task #2**.
 
 ---
 
-## 3. Core Features & Capabilities
+## 1. Architectural Highlights & Compliance
 
-1. **Real Voice-to-Text Input**: Integrates native browser `SpeechRecognition` API with Web Audio API level analyser, live waveform animations, and editable transcripts with manual keyboard fallback.
-2. **Document Ingestion & Multi-Format Support**: Ingests PDF, TXT, DOCX, and Markdown files. Automatically pre-seeds a comprehensive sample enterprise knowledge base on first launch.
-3. **Multiple Chunking Strategies**:
-   - **Fixed-Size Chunking**: Splits text into fixed character bounds with word boundary preservation and custom overlap.
-   - **Sentence-Based Chunking**: Groups natural grammatical sentences up to target size with rolling overlap.
-   - **Recursive Character Chunking**: Hierarchically splits across paragraphs (`\n\n`), newlines (`\n`), sentences (`. `), and words.
-4. **FAISS Vector Retrieval Engine**: Uses `IndexFlatIP` on L2-normalized 384-dimensional dense vectors generated by `all-MiniLM-L6-v2`. Features MD5-indexed in-memory embedding caching.
-5. **Context-Aware Grounded Generation**: Strict prompt engineering enforces that answers are generated strictly from retrieved context passages with bracketed citations (`[Source 1]`, `[Source 2]`).
-6. **Dual Live / Demo Mode**: Seamlessly works out-of-the-box in local deterministic Demo Mode without requiring external API keys. Automatically switches to Live Mode when `GEMINI_API_KEY` or `OPENAI_API_KEY` is provided.
-7. **Multi-Tier Guardrails & Abstention**:
-   - Blocks prompt injection attacks (e.g., *"ignore previous instructions"*).
-   - Rejects out-of-scope queries before retrieval.
-   - **Automated Evidence Abstention**: If retrieved chunks have similarity below confidence threshold (< 40%), VocaRAG explicitly abstains (*"I couldn't find enough evidence in the knowledge base to answer this question reliably."*) with zero unnecessary LLM invocations.
-8. **Real Stage Latency Telemetry**: Microsecond tracking of Voice Capture, Preprocessing, Guardrails, Embedding, FAISS Retrieval, and Generation.
-9. **Empirical P50 / P70 / P100 Benchmarking**: Dedicated Benchmark Lab executing 16 domain queries against the live knowledge base, calculating true percentiles and rendering Recharts distribution graphs.
-10. **Editorial Design**: Custom forest green (`#0C241B`), warm cream (`#F8F6F0`), and restrained rose accents with Newsreader typography and Framer Motion micro-animations.
+1. **Server-Side Multilingual STT (Sarvam AI Saaras v3)**: 
+   Raw browser audio streams directly to Sarvam AI's REST endpoint supporting 23 Indian languages (`hi-IN`, `te-IN`, `bn-IN`, `ta-IN`, `en-IN`, etc.) with mode switching (`transcribe`, `translate`, `codemix`).
+2. **AI4Bharat MSMARCO-XI Corpus**:
+   Native ingestion and retrieval over `ai4bharat/MSMARCO-XI` (14 Indic languages) preserving gold relevance tags (`is_selected`) for formal Information Retrieval evaluation (Recall@k, MRR).
+3. **Dual Knowledge Collection Architecture**:
+   - **Indic MSMARCO-XI (Graded)**: Multilingual passage search and Q&A across Hindi, Telugu, and English.
+   - **Enterprise Policies (Demo)**: Comprehensive corporate handbook, travel, security, and hardware documentation.
+4. **Multilingual Dense Embeddings**:
+   `sentence-transformers/paraphrase-multilingual-mpnet-base-v2` (768-dimensional dense vector space) ensuring cross-lingual semantic alignment.
+5. **Four Chunking Strategies**:
+   - **Recursive Hierarchical**: Paragraph $\to$ line $\to$ sentence $\to$ word boundary descent.
+   - **Semantic Boundary**: Embedding-cosine inflection point splitting.
+   - **Sentence Grouping**: Overlapping sentence windows.
+   - **Fixed-Size**: Word-boundary snapped token windows.
+6. **Sub-250ms Groq LPU Fast-Path + Multi-Tier Fallbacks**:
+   Instant low-latency generation via Groq `llama-3.3-70b-versatile`, with seamless fallback to Gemini 1.5 Flash, OpenAI GPT-4o-mini, or deterministic zero-API local synthesis.
+7. **Two-Sided Guardrails & Hallucination Prevention**:
+   - Pre-retrieval Prompt Injection & Jailbreak regex/pattern shields (English & transliterated Indic).
+   - Post-retrieval Evidence Confidence Thresholding ($<30\%$ similarity triggers explicit abstention).
+   - Post-generation Groundedness token-overlap verification against cited chunks.
+8. **Real Stage Latency Telemetry & P50/P70/P100 Benchmarking**:
+   Clear split between **Retrieval Pipeline** ($<200\text{ms}$ SLA) and **End-to-End Generation**.
 
 ---
 
-## 4. Project Structure
+## 2. Project Architecture
 
 ```
 ├── backend/
-│   ├── main.py                  # FastAPI application entrypoint with lifespan
-│   ├── config.py                # App configuration, thresholds & paths
-│   ├── requirements.txt         # Python dependencies
+│   ├── main.py                  # FastAPI application with dual-collection lifespan
+│   ├── config.py                # App configuration, thresholds & model parameters
+│   ├── requirements.txt         # Python dependencies (FastAPI, FAISS, PyTorch, Datasets, Pytest)
 │   ├── models/
 │   │   ├── __init__.py
-│   │   └── schemas.py           # Pydantic schemas for requests, sources, latency & benchmarks
+│   │   └── schemas.py           # Pydantic schemas with telemetry & collection routing
 │   ├── rag/
-│   │   ├── chunking.py          # Fixed, Sentence, and Recursive chunking engines
-│   │   ├── embeddings.py        # SentenceTransformers all-MiniLM-L6-v2 + MD5 cache
-│   │   ├── retriever.py         # FAISS IndexFlatIP vector store & cosine search
-│   │   ├── ingestion.py         # Multi-format parser (PDF, TXT, DOCX) & index builder
-│   │   ├── generator.py         # Gemini, OpenAI & deterministic local grounded synthesizers
-│   │   ├── guardrails.py        # Injection detector & evidence threshold abstention
-│   │   ├── pipeline.py          # End-to-end RAG orchestrator with stage timestamps
-│   │   └── benchmark.py         # 16-query evaluation suite & P50/P70/P100 calculator
+│   │   ├── stt.py               # Sarvam AI Saaras v3 STT client with exponential retry
+│   │   ├── msmarco_loader.py    # AI4Bharat MSMARCO-XI dataset loader & IR eval tracker
+│   │   ├── chunking.py          # Fixed, Sentence, Recursive, and Semantic chunkers
+│   │   ├── embeddings.py        # 768-dim Multilingual MPNet SentenceTransformer + MD5 cache
+│   │   ├── retriever.py         # Dual FAISS IndexFlatIP vector stores (Enterprise + MSMARCO)
+│   │   ├── ingestion.py         # Multi-format parser (PDF, TXT, DOCX) & collection indexer
+│   │   ├── generator.py         # Groq LPU, Gemini, OpenAI & local deterministic grounded synthesizers
+│   │   ├── guardrails.py        # Injection detector, evidence abstention & post-gen groundedness
+│   │   ├── pipeline.py          # Staged voice-to-answer RAG orchestrator with timestamping
+│   │   └── benchmark.py         # 16-query evaluation suite & empirical percentile calculator
 │   └── routes/
-│       ├── ask.py               # POST /api/ask
+│       ├── ask.py               # POST /api/ask (voice/text -> grounded answer)
+│       ├── stt.py               # POST /api/stt/transcribe (Sarvam audio upload)
 │       ├── ingestion.py         # POST /api/ingest, POST /api/reindex, GET /api/documents
-│       ├── retrieval.py         # POST /api/retrieval/search
+│       ├── retrieval.py         # POST /api/retrieval/search (Isolated FAISS sandbox)
 │       ├── benchmark.py         # POST /api/benchmark/run, GET /api/benchmark/latest
 │       ├── guardrails.py        # POST /api/guardrails/check, GET /api/guardrails/rules
-│       └── system.py            # GET /api/system, GET /api/health, GET /api/stats
+│       └── system.py            # GET /api/system, GET /api/health
 ├── frontend/
-│   ├── package.json
-│   ├── tailwind.config.js
-│   ├── index.html
-│   └── src/
-│       ├── App.tsx              # Root component & global state
-│       ├── index.css            # Editorial styling, tokens & waveform animations
-│       ├── hooks/
-│       │   └── useSpeechRecognition.ts  # Web Speech API & Web Audio RMS analyser hook
-│       ├── services/
-│       │   └── api.ts           # Typed backend client
-│       ├── components/
-│       │   ├── Header.tsx       # Navigation, badge, mode indicator & tour trigger
-│       │   ├── VoiceHero.tsx    # Central mic, live waveform, transcript & suggestions
-│       │   ├── PipelineVisualizer.tsx # Animated node workflow with stage timings
-│       │   ├── AnswerCard.tsx   # Grounded response, confidence & citations
-│       │   ├── SourceDrawer.tsx # Slide-out chunk context inspector
-│       │   ├── LatencyBreakdown.tsx # Stage telemetry cards
-│       │   └── DemoTourModal.tsx # Step-by-step evaluator walkthrough
-│       └── pages/
-│           ├── AskPage.tsx
-│           ├── KnowledgeBasePage.tsx
-│           ├── RetrievalLabPage.tsx
-│           ├── BenchmarkLabPage.tsx
-│           ├── GuardrailsPage.tsx
-│           └── SystemStatusPage.tsx
-├── data/
-│   ├── sample_docs/             # Enterprise policy documents (HR, Refund, Travel, Manual, Security)
-│   ├── uploads/                 # User uploaded documents
-│   └── storage/                 # FAISS vector store & index metadata
-├── .env.example
+│   ├── src/
+│   │   ├── App.tsx              # Root container & navigation
+│   │   ├── hooks/
+│   │   │   └── useSpeechRecognition.ts  # MediaRecorder + Sarvam STT hook
+│   │   ├── components/
+│   │   │   ├── VoiceHero.tsx    # Mic, Sarvam language picker & collection switcher
+│   │   │   ├── PipelineVisualizer.tsx # Animated stage execution graph
+│   │   │   ├── AnswerCard.tsx   # Grounded response, confidence & citations
+│   │   │   ├── SourceDrawer.tsx # Slide-out chunk context inspector
+│   │   │   └── LatencyBreakdown.tsx # Telemetry metrics
+│   │   └── pages/
+│   │       ├── AskPage.tsx
+│   │       ├── KnowledgeBasePage.tsx # Chunking studio & collection manager
+│   │       ├── RetrievalLabPage.tsx  # Vector search playground
+│   │       └── BenchmarkLabPage.tsx  # Dual percentile latency charts
+├── tests/
+│   ├── conftest.py              # Pytest fixture initializing vector store
+│   ├── test_rag_pipeline.py     # Groundedness, abstention, injection & semantic tests
+│   └── test_api_endpoints.py    # Async HTTP tests for all FastAPI routes
+├── .github/workflows/
+│   └── ci.yml                   # Automated Pytest + Vite build CI pipeline
+├── Dockerfile                   # Multi-stage production container build
+├── docker-compose.yml           # Docker orchestration definition
 └── README.md
 ```
 
 ---
 
-## 5. Installation & Setup
+## 3. Quickstart & Installation
 
 ### Prerequisites
-- **Python 3.10+** (Tested on Python 3.13)
+- **Python 3.10+** (Tested on Python 3.11 / 3.14)
 - **Node.js 18+** & npm
 
-### 1. Backend Setup
+### 1. Environment Setup
 
 ```bash
-# Navigate to project root
-cd "HHGoa Task 2"
+# Copy template and fill your API keys
+cp .env.example .env
+```
 
+### 2. Backend Setup
+
+```bash
 # Create and activate Python virtual environment
 python -m venv venv
-
-# Windows:
-.\venv\Scripts\activate
-# macOS/Linux:
-# source venv/bin/activate
-
-# Install backend dependencies
-pip install -r backend/requirements.txt
-
-# Run FastAPI backend server
-python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
-```
-*The backend starts at `http://localhost:8000` and automatically indexes the sample knowledge base.*
-
-### 2. Frontend Setup
-
-```bash
-# In a new terminal, navigate to frontend/
-cd frontend
+.\venv\Scripts\activate      # Windows
+# source venv/bin/activate   # macOS / Linux
 
 # Install dependencies
-npm install
+pip install -r backend/requirements.txt
 
-# Start Vite development server
+# Start backend server
+python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+```
+*Backend runs on `http://localhost:8000` (FastAPI docs at `/docs`).*
+
+### 3. Frontend Setup
+
+```bash
+cd frontend
+npm install
 npm run dev
 ```
-*The frontend starts at `http://localhost:5173`.*
+*Frontend runs on `http://localhost:5173`.*
 
 ---
 
-## 6. Verification of the 5 Core Requirements
+## 4. Running Automated Tests & Verification
 
-| # | Requirement | Implementation & Verification |
-|---|---|---|
-| **1** | **Microphone & Real Transcript** | Uses native browser `SpeechRecognition` API + Web Audio API RMS analyser to stream live transcript into the editable query box. |
-| **2** | **Upload & Index Documents** | Multi-format parser handles PDF, TXT, DOCX. Chunking studio supports Fixed, Sentence, and Recursive algorithms with live statistics. |
-| **3** | **In-Document Query & Grounding** | Queries like *"What is the refund period for hardware purchases?"* retrieve exact chunks with >55% cosine match and generate cited answers. |
-| **4** | **Out-of-Document Abstention** | Queries like *"What is the policy for offshore cryptocurrency trading?"* fall below confidence threshold and return clean abstentions without hallucinating. |
-| **5** | **Real P50/P70/P100 Benchmarking** | Executes 16 automated queries through the live pipeline, calculating exact mathematical percentiles rendered via Recharts. |
+```bash
+# Run backend Pytest suite with detailed output
+pytest tests/ -v
 
----
-
-## 7. API Reference
-
-- `POST /api/ask`: Voice-to-Answer RAG query execution with microsecond latency breakdown.
-- `POST /api/ingest`: Multipart file upload (PDF/TXT/DOCX/MD).
-- `POST /api/reindex`: Reindexes corpus using requested chunking strategy, chunk size, and overlap.
-- `GET /api/documents`: Lists all indexed documents.
-- `DELETE /api/documents/{id}`: Deletes document and rebuilds vector store.
-- `POST /api/retrieval/search`: Isolated vector search sandbox with Top-K & threshold tuning.
-- `POST /api/benchmark/run`: Executes test suite and computes P50/P70/P100 latency percentiles.
-- `POST /api/guardrails/check`: Tests query against prompt injection and safety rules.
-- `GET /api/system`: Live system health, model telemetry, and vector store statistics.
+# Run frontend build check
+cd frontend && npm run build
+```
 
 ---
 
-## 8. License
+## 5. API Reference Summary
 
-Developed for **Hackathon / HHGoa'26 — Task #2**.
+- `POST /api/ask`: Core RAG query with collection selection and microsecond telemetry.
+- `POST /api/stt/transcribe`: Audio upload to Sarvam AI Saaras v3 STT.
+- `POST /api/ingest`: Multipart file upload (PDF/TXT/DOCX/MD) to specified collection.
+- `POST /api/reindex`: Reindexes collection with requested chunking strategy (Recursive, Semantic, Sentence, Fixed).
+- `POST /api/retrieval/search`: Vector search sandbox with Top-K & threshold controls.
+- `POST /api/benchmark/run`: Executes 16-query evaluation suite computing P50/P70/P100 percentiles.
+- `GET /api/system`: Health, models, and active vector store statistics.
+
+---
+
+## 6. License
+
+Developed for **HHGoa'26 — Task #2**. MIT License.
