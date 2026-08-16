@@ -1,40 +1,37 @@
-import os
 import json
 import logging
 from pathlib import Path
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Optional, Dict
 import numpy as np
-from backend.config import settings
 from backend.models.schemas import SourceItem, ChunkInfo
+from backend.config import settings
 
 logger = logging.getLogger(__name__)
 
 class VectorRetriever:
-    _instance = None
+    """
+    In-memory and FAISS-backed dense vector index for a specific collection (e.g. enterprise or msmarco).
+    """
 
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super(VectorRetriever, cls).__new__(cls)
-            cls._instance._init_retriever()
-        return cls._instance
-
-    def _init_retriever(self):
+    def __init__(self, collection_name: str = "enterprise", storage_dir: Optional[Path] = None):
+        self.collection_name = collection_name
+        self.storage_dir = storage_dir or (settings.ENTERPRISE_INDEX_DIR if collection_name == "enterprise" else settings.MSMARCO_INDEX_DIR)
         self.chunks: List[ChunkInfo] = []
         self.embeddings: Optional[np.ndarray] = None
+        self.dimension: int = settings.EMBEDDING_DIMENSION
         self.faiss_index = None
-        self.use_faiss = False
-        self.dimension = settings.EMBEDDING_DIMENSION
+        self.use_faiss = True
+        self.faiss_module = None
         self._init_faiss()
 
     def _init_faiss(self):
         try:
             import faiss
             self.faiss_module = faiss
-            self.faiss_index = faiss.IndexFlatIP(self.dimension)
             self.use_faiss = True
-            logger.info("FAISS IndexFlatIP initialized.")
-        except Exception as e:
-            logger.warning(f"FAISS not available ({e}). Using optimized numpy cosine indexing.")
+            logger.info(f"[{self.collection_name}] FAISS initialized successfully.")
+        except ImportError:
+            logger.warning(f"[{self.collection_name}] FAISS not available. Using NumPy vectorized cosine similarity.")
             self.use_faiss = False
 
     @property
@@ -58,9 +55,9 @@ class VectorRetriever:
                 self.faiss_index = self.faiss_module.IndexFlatIP(self.dimension)
                 if len(self.chunks) > 0 and self.embeddings.shape[0] > 0:
                     self.faiss_index.add(self.embeddings)
-                logger.info(f"FAISS index built with {len(self.chunks)} vectors (dim: {self.dimension}).")
+                logger.info(f"[{self.collection_name}] FAISS index built with {len(self.chunks)} vectors (dim: {self.dimension}).")
             except Exception as e:
-                logger.error(f"Failed to populate FAISS index: {e}. Falling back to numpy.")
+                logger.error(f"[{self.collection_name}] Failed to populate FAISS index: {e}. Falling back to numpy.")
                 self.use_faiss = False
 
     def search(
@@ -78,16 +75,11 @@ class VectorRetriever:
             return []
 
         query_vector = np.array(query_vector, dtype=np.float32).reshape(1, -1)
-        # Ensure query vector is normalized
         q_norm = np.linalg.norm(query_vector)
         if q_norm > 0:
             query_vector = query_vector / q_norm
 
         top_k = min(top_k, len(self.chunks))
-
-        scores: np.ndarray
-        indices: np.ndarray
-
         fetch_k = min(len(self.chunks), max(top_k * 4, 20))
 
         if self.use_faiss and self.faiss_index is not None and self.faiss_index.ntotal > 0:
@@ -115,14 +107,10 @@ class VectorRetriever:
 
             raw_candidates.append((similarity, chunk))
 
-        # Check if domain specific policy has strong evidence
-        # Domain priority: if high-confidence domain policy exists (score >= 0.35), ensure it ranks top
+        # Domain priority: if high-confidence domain policy exists (score >= 0.35), rank top
         domain_candidates = [c for c in raw_candidates if not c[1].doc_name.lower().startswith("general_knowledge")]
         gk_candidates = [c for c in raw_candidates if c[1].doc_name.lower().startswith("general_knowledge")]
 
-        # Determine ordering:
-        # If top domain candidate has strong match (>= 0.38), rank domain candidates first then GK
-        # Otherwise sort purely by cosine similarity
         if domain_candidates and domain_candidates[0][0] >= 0.38:
             ordered_candidates = domain_candidates + gk_candidates
         else:
@@ -137,17 +125,21 @@ class VectorRetriever:
                 continue
             seen_texts.add(text_fingerprint)
 
-            # Assign relevance tier
-            if similarity >= 0.65:
+            if similarity >= 0.60:
                 tier = "High"
-            elif similarity >= 0.45:
+            elif similarity >= 0.40:
                 tier = "Medium"
             else:
                 tier = "Low"
 
-            # Assign category label and source_type
+            is_msmarco = chunk.doc_name.lower().startswith("msmarco") or chunk.metadata.get("source_type") == "msmarco_xi"
             is_gk = chunk.doc_name.lower().startswith("general_knowledge") or chunk.metadata.get("source_type") == "general_knowledge"
-            if is_gk:
+            
+            if is_msmarco:
+                src_type = "msmarco_xi"
+                lang = chunk.metadata.get("language_name", "Indic")
+                cat_label = f"MSMARCO ({lang.upper()})"
+            elif is_gk:
                 src_type = "general_knowledge"
                 cat_label = "GENERAL KNOWLEDGE"
             elif chunk.metadata.get("is_sample"):
@@ -176,7 +168,6 @@ class VectorRetriever:
         return results
 
     def explain_retrieval(self, query: str, results: List[SourceItem]) -> str:
-        """Generates dynamic explanation for why results were retrieved."""
         if not results:
             return "No chunks met the minimum similarity confidence threshold."
         
@@ -187,32 +178,33 @@ class VectorRetriever:
         explanation = (
             f"Top evidence from '{top_res.doc_name}' ({top_res.category_label}) achieved {int(top_res.similarity * 100)}% cosine similarity. "
             f"Retrieved {len(results)} evidence passages across [{type_summary}] with an average similarity of "
-            f"{int(np.mean([r.similarity for r in results]) * 100)}%."
+            f"{int(np.mean([r.similarity for r in results]) * 100)}% in collection '{self.collection_name}'."
         )
         return explanation
 
-    def save(self, directory: Path = settings.INDEX_STORAGE_DIR):
-        """Persists the index and chunk metadata to disk."""
-        directory.mkdir(parents=True, exist_ok=True)
-        meta_file = directory / "metadata.json"
+    def save(self, directory: Optional[Path] = None):
+        target_dir = directory or self.storage_dir
+        target_dir.mkdir(parents=True, exist_ok=True)
+        meta_file = target_dir / "metadata.json"
         
         data = {
             "chunks": [c.model_dump() for c in self.chunks],
-            "dimension": self.dimension
+            "dimension": self.dimension,
+            "collection": self.collection_name
         }
         with open(meta_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
 
         if self.embeddings is not None:
-            np.save(directory / "embeddings.npy", self.embeddings)
+            np.save(target_dir / "embeddings.npy", self.embeddings)
 
         if self.use_faiss and self.faiss_module is not None and self.faiss_index is not None:
-            self.faiss_module.write_index(self.faiss_index, str(directory / "faiss.index"))
-        logger.info(f"Persisted {len(self.chunks)} chunks to {directory}")
+            self.faiss_module.write_index(self.faiss_index, str(target_dir / "faiss.index"))
+        logger.info(f"[{self.collection_name}] Persisted {len(self.chunks)} chunks to {target_dir}")
 
-    def load(self, directory: Path = settings.INDEX_STORAGE_DIR) -> bool:
-        """Loads index and metadata from disk if present."""
-        meta_file = directory / "metadata.json"
+    def load(self, directory: Optional[Path] = None) -> bool:
+        target_dir = directory or self.storage_dir
+        meta_file = target_dir / "metadata.json"
         if not meta_file.exists():
             return False
 
@@ -222,19 +214,34 @@ class VectorRetriever:
             self.chunks = [ChunkInfo(**c) for c in data.get("chunks", [])]
             self.dimension = data.get("dimension", settings.EMBEDDING_DIMENSION)
 
-            emb_file = directory / "embeddings.npy"
+            emb_file = target_dir / "embeddings.npy"
             if emb_file.exists():
                 self.embeddings = np.load(emb_file)
 
-            faiss_file = directory / "faiss.index"
+            faiss_file = target_dir / "faiss.index"
             if self.use_faiss and self.faiss_module is not None and faiss_file.exists():
                 self.faiss_index = self.faiss_module.read_index(str(faiss_file))
 
-            logger.info(f"Loaded {len(self.chunks)} chunks from {directory}")
+            logger.info(f"[{self.collection_name}] Loaded {len(self.chunks)} chunks from {target_dir}")
             return True
         except Exception as e:
-            logger.error(f"Error loading saved index: {e}")
+            logger.error(f"[{self.collection_name}] Error loading saved index: {e}")
             return False
 
-# Singleton instance
-vector_retriever = VectorRetriever()
+
+class RetrieverRegistry:
+    """Manages independent vector retrievers for different knowledge collections."""
+    def __init__(self):
+        self._retrievers: Dict[str, VectorRetriever] = {
+            "enterprise": VectorRetriever("enterprise", settings.ENTERPRISE_INDEX_DIR),
+            "msmarco": VectorRetriever("msmarco", settings.MSMARCO_INDEX_DIR)
+        }
+
+    def get_retriever(self, collection: Optional[str] = "enterprise") -> VectorRetriever:
+        key = (collection or "enterprise").lower()
+        if key not in self._retrievers:
+            self._retrievers[key] = VectorRetriever(key, settings.INDEX_STORAGE_DIR / key)
+        return self._retrievers[key]
+
+retriever_registry = RetrieverRegistry()
+vector_retriever = retriever_registry.get_retriever("enterprise")
