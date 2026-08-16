@@ -153,9 +153,6 @@ python -m venv venv
 # Install backend dependencies
 pip install -r backend/requirements.txt
 
-# (Optional) Configure .env file
-copy .env.example .env
-
 # Run FastAPI backend server
 python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 ```
