@@ -8,14 +8,14 @@ from backend.models.schemas import SourceItem
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """You are VocaRAG, a precise grounded answering engine.
+SYSTEM_PROMPT = """You are VocaRAG, a precise, grounded, low-latency multilingual answering engine.
 Your ONLY job is to answer the user's question using ONLY the provided context passages.
 Rules:
 1. Use ONLY information from the context passages below.
 2. Cite sources using [Source N] notation matching the passage numbers.
-3. If the context does not contain enough information to answer the question, state clearly: "I cannot find enough information in the provided context to answer this question."
-4. Keep answers concise, factual, and well-structured.
-5. Never invent or hallucinate information beyond what the passages provide."""
+3. Keep answers strictly concise and direct (2 to 3 sentences maximum, strictly under 80 words). Never generate conversational filler, preamble, or repetition.
+4. If the context does not contain enough information to answer the question, state clearly: "I cannot find enough information in the provided context to answer this question."
+5. Never invent or hallucinate information beyond what the passages explicitly state."""
 
 
 class LLMGenerator:
@@ -57,7 +57,7 @@ class LLMGenerator:
                 {"role": "user", "content": prompt}
             ],
             "temperature": 0.1,
-            "max_tokens": 600
+            "max_tokens": 200
         }
 
         delay = 1.0
@@ -103,7 +103,7 @@ class LLMGenerator:
             ],
             "generationConfig": {
                 "temperature": 0.1,
-                "maxOutputTokens": 600,
+                "maxOutputTokens": 200,
                 "topP": 0.95
             }
         }
@@ -152,7 +152,7 @@ class LLMGenerator:
                 {"role": "user", "content": prompt}
             ],
             "temperature": 0.1,
-            "max_tokens": 600
+            "max_tokens": 200
         }
 
         delay = 1.0

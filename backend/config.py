@@ -75,7 +75,7 @@ class Settings:
     GROUNDEDNESS_THRESHOLD: float = 0.35  # Post-generation groundedness check
     
     # Active collection for queries (enterprise | msmarco)
-    DEFAULT_COLLECTION: str = 'enterprise'
+    DEFAULT_COLLECTION: str = os.getenv('DEFAULT_COLLECTION', 'msmarco')
     
     # Host & Ports
     HOST: str = os.getenv('HOST', '0.0.0.0')

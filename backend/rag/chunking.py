@@ -16,7 +16,7 @@ class ChunkingEngine:
 
     @staticmethod
     def _split_into_sentences(text: str) -> List[str]:
-        sentence_end = re.compile(r'(?<=[.!?])\s+')
+        sentence_end = re.compile(r'(?<=[.!?।॥])\s+')
         raw_sentences = sentence_end.split(text.strip())
         sentences = []
         for s in raw_sentences:
