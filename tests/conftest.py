@@ -10,7 +10,9 @@ import pytest
 from backend.rag.embeddings import embedding_engine
 from backend.rag.ingestion import ingestion_manager
 
-@pytest.fixture(scope='session', autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 def setup_test_knowledge_base():
+    """Initializes the embedding model and loads both enterprise and MSMARCO knowledge bases."""
     embedding_engine.initialize()
     ingestion_manager.load_sample_knowledge_base()
+    ingestion_manager.load_msmarco_knowledge_base()
