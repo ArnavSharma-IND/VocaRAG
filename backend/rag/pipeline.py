@@ -10,14 +10,32 @@ from backend.rag.generator import llm_generator
 
 logger = logging.getLogger(__name__)
 
+# Multilingual abstention phrase dictionary (English, Hindi, Telugu, Transliterated)
+MULTILINGUAL_ABSTAIN_PHRASES = [
+    # English
+    "no information", "not mentioned", "not provide", "does not contain",
+    "cannot find", "couldn't find", "not possible to determine",
+    "not in the provided", "no mention", "not enough information",
+    # Hindi (Devanagari)
+    "कोई जानकारी नहीं", "जानकारी उपलब्ध नहीं", "जानकारी नहीं मिली",
+    "संदर्भ में नहीं", "उल्लेख नहीं", "पर्याप्त जानकारी नहीं",
+    "उत्तर नहीं दिया जा सकता",
+    # Telugu
+    "సమాచారం లేదు", "వివరాలు లేవు", "సమాధానం లేదు",
+    "సమాచారం అందుబాటులో లేదు", "ప్రస్తావించబడలేదు",
+    # Transliterated Indic
+    "koi jankari nahi", "jankari nahi mili", "sandarbh me nahi"
+]
+
+
 class RAGPipeline:
     async def process_query(self, req: QueryRequest) -> AskResponse:
         """
         Executes the full Voice-to-Answer RAG Pipeline with real microsecond latency tracking.
         Two-sided Guardrailing:
-        1. Pre-retrieval: Prompt injection & safety patterns.
+        1. Pre-retrieval: Multilingual Prompt injection & safety patterns.
         2. Pre-generation: Retrieval confidence & threshold check.
-        3. Post-generation: Token-overlap groundedness check & LLM abstention detection.
+        3. Post-generation: Script-agnostic character n-gram groundedness & multilingual abstention detection.
         """
         t_pipeline_start = time.perf_counter()
         
@@ -123,18 +141,14 @@ class RAGPipeline:
         answer_text, active_mode = await llm_generator.generate_answer(cleaned_query, sources)
         generation_ms = round((time.perf_counter() - t0) * 1000, 2)
 
-        # 8. Post-Generation Groundedness & Abstention Verification
+        # 8. Post-Generation Multilingual Groundedness & Abstention Verification
         t0 = time.perf_counter()
         is_grounded_check, groundedness_score, ground_reason = guardrail_engine.check_groundedness(answer_text, sources)
         groundedness_check_ms = round((time.perf_counter() - t0) * 1000, 2)
 
-        # Detect if LLM generated an explicit abstention response
-        abstain_phrases = [
-            "no information", "not mentioned", "not provide", "does not contain",
-            "cannot find", "couldn't find", "not possible to determine",
-            "not in the provided", "no mention"
-        ]
-        is_llm_abstaining = any(p in answer_text.lower() for p in abstain_phrases)
+        # Detect if LLM generated an explicit multilingual abstention response
+        answer_lower = answer_text.lower()
+        is_llm_abstaining = any(p in answer_lower for p in MULTILINGUAL_ABSTAIN_PHRASES)
 
         # Determine overall grounded/abstained state
         if is_llm_abstaining or (not is_grounded_check and groundedness_score < 0.20):

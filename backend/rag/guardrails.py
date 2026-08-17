@@ -1,6 +1,6 @@
 import re
 import logging
-from typing import Tuple, Optional, List
+from typing import Tuple, Optional, List, Set
 import numpy as np
 from backend.models.schemas import GuardrailInfo, SourceItem
 from backend.config import settings
@@ -8,13 +8,25 @@ from backend.config import settings
 logger = logging.getLogger(__name__)
 
 
+def _extract_char_ngrams(text: str, n: int = 3) -> Set[str]:
+    """
+    Extracts normalized character n-grams.
+    Script-agnostic: operates identically across Latin, Devanagari, Telugu, Bengali, etc.
+    """
+    # Normalize whitespaces and lowercase
+    cleaned = re.sub(r'\s+', ' ', text.strip().lower())
+    if len(cleaned) < n:
+        return {cleaned} if cleaned else set()
+    return {cleaned[i:i + n] for i in range(len(cleaned) - n + 1)}
+
+
 class GuardrailEngine:
     """
     Multi-layer safety and hallucination prevention guardrail engine:
     1. Prompt Injection & Jailbreak Defense (Pre-retrieval)
-    2. Out-of-Scope / Toxic query filter (Pre-retrieval)
+    2. Out-of-Scope / Harmful query filter (Pre-retrieval)
     3. Retrieval Confidence & Evidence Thresholding (Post-retrieval Abstention)
-    4. Post-Generation Groundedness Verification (NEW)
+    4. Multilingual & Script-Agnostic Post-Generation Groundedness Verification
     """
 
     # Comprehensive Prompt Injection patterns (English + transliterated Indic)
@@ -33,6 +45,11 @@ class GuardrailEngine:
         r"(?i)pichle\s+(sabhi\s+)?nirdesh(on)?\s+(ko\s+)?bhool\s+ja",
         r"(?i)system\s+prompt\s+dikha",
         r"(?i)sab\s+niyam\s+tod",
+        # Devanagari Hindi injection attempts
+        r"पिछले\s+(सभी\s+)?निर्देश(ों)?\s+(को\s+)?भूल\s+जाओ?",
+        r"सिस्टम\s+प्रॉम्प्ट\s+दिखाओ?",
+        # Telugu injection attempts
+        r"మునుపటి\s+సూచనలను\s+విస్మరించండి",
         # Additional patterns
         r"(?i)pretend\s+you\s+are\s+(not\s+)?(an?\s+)?(ai|chatbot|assistant)",
         r"(?i)simulate\s+(being\s+)?(hacked|compromised|jailbroken)",
@@ -88,7 +105,7 @@ class GuardrailEngine:
                 return GuardrailInfo(
                     passed=False,
                     flagged_type="OUT_OF_SCOPE",
-                    reason="Query falls outside safe enterprise knowledge boundaries.",
+                    reason="Query falls outside safe knowledge boundaries.",
                     abstained=True
                 )
 
@@ -130,45 +147,44 @@ class GuardrailEngine:
         threshold: float = settings.GROUNDEDNESS_THRESHOLD
     ) -> Tuple[bool, float, Optional[str]]:
         """
-        Post-generation groundedness verification.
-        Checks token-overlap between the generated answer and its cited source chunks.
-        No second LLM call — keeps it fast to protect latency budget.
+        Multilingual, script-agnostic post-generation groundedness verification.
+        Uses character 3-gram and 4-gram overlap + Unicode word token overlap.
+        Works seamlessly across English, Hindi (Devanagari), Telugu, Bengali, and code-mixed text.
         
         Returns: (is_grounded, groundedness_score, reason)
         """
         if not answer_text or not sources:
             return False, 0.0, "No answer or sources to verify."
 
+        # Strip citations like [Source 1], [Note: ...] from answer before computing overlap
+        clean_answer = re.sub(r'\[Source\s*\d+\]', '', answer_text)
+        clean_answer = re.sub(r'\[Note:.*?\]', '', clean_answer).strip()
+
+        if not clean_answer:
+            return True, 1.0, None
+
         # Concatenate all source content
-        source_text = " ".join(s.content for s in sources).lower()
-        answer_lower = answer_text.lower()
+        source_text = " ".join(s.content for s in sources)
 
-        # Tokenize both
-        source_tokens = set(re.findall(r'\b\w{3,}\b', source_text))
-        answer_tokens = set(re.findall(r'\b\w{3,}\b', answer_lower))
+        # 1. Character 3-gram overlap (script-agnostic)
+        ans_3grams = _extract_char_ngrams(clean_answer, n=3)
+        src_3grams = _extract_char_ngrams(source_text, n=3)
+        
+        # 2. Character 4-gram overlap (script-agnostic)
+        ans_4grams = _extract_char_ngrams(clean_answer, n=4)
+        src_4grams = _extract_char_ngrams(source_text, n=4)
 
-        if not answer_tokens:
-            return True, 1.0, None
+        overlap_3g = len(ans_3grams & src_3grams) / len(ans_3grams) if ans_3grams else 0.0
+        overlap_4g = len(ans_4grams & src_4grams) / len(ans_4grams) if ans_4grams else 0.0
 
-        # Remove common stop words from overlap calculation
-        stop_words = {
-            "the", "and", "for", "are", "but", "not", "you", "all", "can",
-            "had", "her", "was", "one", "our", "out", "has", "his", "how",
-            "its", "may", "new", "now", "old", "see", "way", "who", "did",
-            "get", "let", "say", "she", "too", "use", "with", "from", "this",
-            "that", "these", "those", "then", "than", "been", "have", "each",
-            "make", "like", "long", "many", "some", "them", "will", "into",
-            "year", "your", "more", "also", "back", "after", "other", "which",
-            "source", "answer", "question", "based", "according",
-        }
-        answer_content_tokens = answer_tokens - stop_words
-        source_content_tokens = source_tokens - stop_words
+        # 3. Unicode word token overlap (matches any language word characters)
+        ans_tokens = set(re.findall(r'[\w\u0900-\u0D7F\u0C00-\u0C7F]{2,}', clean_answer.lower()))
+        src_tokens = set(re.findall(r'[\w\u0900-\u0D7F\u0C00-\u0C7F]{2,}', source_text.lower()))
 
-        if not answer_content_tokens:
-            return True, 1.0, None
+        token_overlap = len(ans_tokens & src_tokens) / len(ans_tokens) if ans_tokens else 0.0
 
-        overlap = answer_content_tokens & source_content_tokens
-        groundedness_score = len(overlap) / len(answer_content_tokens)
+        # Blended groundedness metric: 40% char 3-gram + 30% char 4-gram + 30% token overlap
+        groundedness_score = (0.40 * overlap_3g) + (0.30 * overlap_4g) + (0.30 * token_overlap)
 
         if groundedness_score < threshold:
             return (

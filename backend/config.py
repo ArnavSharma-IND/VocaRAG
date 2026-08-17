@@ -72,7 +72,7 @@ class Settings:
     # Recalibrated for paraphrase-multilingual-mpnet-base-v2:
     # Multilingual models produce slightly lower absolute similarities than MiniLM
     CONFIDENCE_ABSTAIN_THRESHOLD: float = 0.30
-    GROUNDEDNESS_THRESHOLD: float = 0.25  # Post-generation groundedness check
+    GROUNDEDNESS_THRESHOLD: float = 0.35  # Post-generation groundedness check
     
     # Active collection for queries (enterprise | msmarco)
     DEFAULT_COLLECTION: str = 'enterprise'
