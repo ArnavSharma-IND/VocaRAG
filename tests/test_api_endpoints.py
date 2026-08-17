@@ -42,3 +42,12 @@ async def test_stt_status_endpoint():
     data = response.json()
     assert data["provider"] == "sarvam"
     assert len(data["supported_languages"]) > 0
+
+@pytest.mark.asyncio
+async def test_benchmark_suite_endpoint():
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
+        response = await ac.get("/api/benchmark/suite?collection=msmarco")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) > 0
+    assert any("Hindi" in item.get("category", "") for item in data)

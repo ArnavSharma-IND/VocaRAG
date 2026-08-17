@@ -112,7 +112,26 @@ export interface BenchmarkQueryRun {
   timestamp: string;
 }
 
+export interface IREvalResult {
+  total_queries: number;
+  recall_at_1: number;
+  recall_at_3: number;
+  recall_at_5: number;
+  recall_at_10: number;
+  mrr: number;
+  avg_retrieval_latency_ms: number;
+  per_language: Record<string, {
+    total_queries: number;
+    recall_at_1: number;
+    recall_at_5: number;
+    recall_at_10: number;
+    mrr: number;
+  }>;
+  evaluated_at: string;
+}
+
 export interface BenchmarkSummary {
+  collection: string;
   total_queries: number;
   successful_queries: number;
   p50_total_ms: number;
@@ -131,6 +150,7 @@ export interface BenchmarkSummary {
   meets_retrieval_target: boolean;
   meets_e2e_target: boolean;
   meets_target: boolean;
+  ir_eval?: IREvalResult | null;
   runs: BenchmarkQueryRun[];
 }
 

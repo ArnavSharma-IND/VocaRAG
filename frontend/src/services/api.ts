@@ -6,6 +6,7 @@ import type {
   ChunkInfo,
   RetrievalSearchResult,
   BenchmarkSummary,
+  IREvalResult,
   GuardrailCheckResponse,
   SystemStatus,
 } from '../types';
@@ -126,8 +127,8 @@ export const api = {
     return handleResponse<RetrievalSearchResult>(res);
   },
 
-  async runBenchmark(customQueries?: string[]): Promise<BenchmarkSummary> {
-    const res = await fetch(`${API_BASE_URL}/benchmark/run`, {
+  async runBenchmark(customQueries?: string[], collection: string = 'msmarco'): Promise<BenchmarkSummary> {
+    const res = await fetch(`${API_BASE_URL}/benchmark/run?collection=${collection}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(customQueries ? { custom_queries: customQueries } : {}),
@@ -135,9 +136,21 @@ export const api = {
     return handleResponse<BenchmarkSummary>(res);
   },
 
-  async getLatestBenchmark(): Promise<BenchmarkSummary> {
-    const res = await fetch(`${API_BASE_URL}/benchmark/latest`);
+  async getLatestBenchmark(collection: string = 'msmarco'): Promise<BenchmarkSummary> {
+    const res = await fetch(`${API_BASE_URL}/benchmark/latest?collection=${collection}`);
     return handleResponse<BenchmarkSummary>(res);
+  },
+
+  async runIREval(topK: number = 10): Promise<IREvalResult> {
+    const res = await fetch(`${API_BASE_URL}/benchmark/ir-eval?top_k=${topK}`, {
+      method: 'POST',
+    });
+    return handleResponse<IREvalResult>(res);
+  },
+
+  async getIREval(): Promise<IREvalResult> {
+    const res = await fetch(`${API_BASE_URL}/benchmark/ir-eval`);
+    return handleResponse<IREvalResult>(res);
   },
 
   async checkGuardrails(query: string): Promise<GuardrailCheckResponse> {
