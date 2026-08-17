@@ -1,12 +1,14 @@
 import hashlib
 import logging
 import time
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional
 from backend.config import settings
+from backend.models.schemas import ChunkInfo
+from backend.rag.chunking import ChunkingEngine, generate_chunk_id
 
 logger = logging.getLogger(__name__)
 
-# Language code to MSMARCO-XI HuggingFace config name mapping
+# Language code to MSMARCO-XI HuggingFace config mapping
 LANG_TO_HF_CONFIG = {
     "hi": "hi",
     "te": "te",
@@ -47,7 +49,7 @@ LANG_NAMES = {
 class MSMARCOLoader:
     """
     Loads passages from ai4bharat/MSMARCO-XI into the VocaRAG ingestion pipeline.
-    Extracts clean passages with MS MARCO metadata (query_id, is_selected, language).
+    Preserves exact passage-level metadata (passage_id, query_id, is_selected, language).
     """
 
     def __init__(self):
@@ -63,10 +65,14 @@ class MSMARCOLoader:
     def gold_pairs(self) -> List[Dict[str, Any]]:
         return self._gold_pairs
 
+    @property
+    def passage_docs(self) -> List[Dict[str, Any]]:
+        return self._passage_docs
+
     def load_msmarco_corpus(self) -> List[Dict[str, Any]]:
         """
         Downloads and processes MSMARCO-XI passages for configured languages.
-        Returns list of passage documents ready for ingestion.
+        Preserves passage_id, query_id, is_selected for each individual passage.
         """
         if not settings.MSMARCO_ENABLED:
             logger.info("MSMARCO-XI ingestion is disabled.")
@@ -87,9 +93,7 @@ class MSMARCOLoader:
                 logger.warning(f"Unknown MSMARCO-XI language: {lang}. Skipping.")
                 continue
 
-            target_count = settings.MSMARCO_SLICE_SIZES.get(
-                lang, 500
-            )
+            target_count = settings.MSMARCO_SLICE_SIZES.get(lang, 500)
             raw_count = int(target_count * settings.MSMARCO_RAW_OVERSAMPLE)
 
             logger.info(
@@ -101,9 +105,7 @@ class MSMARCOLoader:
 
             try:
                 hf_config = LANG_TO_HF_CONFIG[lang]
-                # For English, the source dataset is the original MS MARCO
                 if lang == "en":
-                    # Load a small slice of the English MS MARCO
                     ds = load_dataset(
                         "microsoft/ms_marco",
                         "v1.1",
@@ -128,7 +130,6 @@ class MSMARCOLoader:
             lang_passages = []
 
             for row_idx, row in enumerate(ds):
-                # Extract passages from the row
                 passages = row.get("passages", {})
                 if not passages:
                     continue
@@ -136,48 +137,47 @@ class MSMARCOLoader:
                 passage_texts = passages.get("passage_text", [])
                 is_selected_flags = passages.get("is_selected", [])
                 query_text = row.get("query", "")
-                query_id = row.get("query_id", str(row_idx))
+                query_id = str(row.get("query_id", row_idx))
 
                 for p_idx, p_text in enumerate(passage_texts):
                     if not p_text or not isinstance(p_text, str):
                         continue
 
                     p_text = p_text.strip()
-
-                    # Skip short/junk passages
-                    if len(p_text) < 50:
+                    if len(p_text) < 40:
                         continue
 
-                    # Deduplicate by content hash
                     content_hash = hashlib.md5(p_text.encode("utf-8")).hexdigest()
                     if content_hash in seen_hashes:
                         continue
                     seen_hashes.add(content_hash)
 
-                    is_selected = (
+                    is_selected = bool(
                         is_selected_flags[p_idx]
                         if p_idx < len(is_selected_flags)
                         else 0
                     )
+                    passage_id = f"{lang}_{query_id}_p{p_idx}"
 
                     passage_doc = {
                         "text": p_text,
                         "language": lang,
                         "language_name": LANG_NAMES.get(lang, lang),
-                        "query_id": str(query_id),
-                        "passage_id": f"{lang}_{query_id}_p{p_idx}",
-                        "is_selected": bool(is_selected),
+                        "query_id": query_id,
+                        "passage_id": passage_id,
+                        "is_selected": is_selected,
                         "source": "msmarco_xi",
                         "content_hash": content_hash,
                     }
                     lang_passages.append(passage_doc)
 
-                    # Track gold pairs for IR eval
                     if is_selected and query_text:
                         self._gold_pairs.append({
                             "query": query_text,
-                            "passage_id": passage_doc["passage_id"],
+                            "passage_id": passage_id,
+                            "query_id": query_id,
                             "language": lang,
+                            "language_name": LANG_NAMES.get(lang, lang),
                         })
 
                     if len(lang_passages) >= target_count:
@@ -201,48 +201,58 @@ class MSMARCOLoader:
         )
         return all_passages
 
-    def get_passages_as_text_docs(self) -> List[Dict[str, Any]]:
+    def get_passage_chunks(self, chunk_size: int = 450, chunk_overlap: int = 80) -> List[ChunkInfo]:
         """
-        Groups passages by language and returns them as synthetic text documents
-        suitable for the existing IngestionManager.ingest_document() interface.
+        Directly converts individual MS MARCO passages into ChunkInfo objects.
+        Preserves passage_id, query_id, is_selected in metadata without lossy document concatenation.
         """
-        if not self._passage_docs:
-            return []
+        chunks: List[ChunkInfo] = []
+        
+        for idx, p in enumerate(self._passage_docs):
+            p_text = p["text"]
+            doc_id = f"msmarco_{p['language']}"
+            doc_name = f"msmarco_xi_{p['language']}.txt"
+            
+            meta = {
+                "passage_id": p["passage_id"],
+                "query_id": p["query_id"],
+                "is_selected": p["is_selected"],
+                "language": p["language"],
+                "language_name": p["language_name"],
+                "source_type": "msmarco_xi",
+                "category_badge": "MSMARCO",
+                "collection": "msmarco",
+                "is_sample": True
+            }
 
-        # Group passages by language
-        by_lang: Dict[str, List[Dict]] = {}
-        for p in self._passage_docs:
-            lang = p["language"]
-            if lang not in by_lang:
-                by_lang[lang] = []
-            by_lang[lang].append(p)
+            # If passage fits inside chunk_size, create 1 ChunkInfo directly
+            if len(p_text) <= chunk_size:
+                c_id = generate_chunk_id(doc_id, idx, p_text)
+                chunks.append(ChunkInfo(
+                    id=c_id,
+                    doc_id=doc_id,
+                    doc_name=doc_name,
+                    chunk_index=idx,
+                    content=p_text,
+                    char_count=len(p_text),
+                    metadata={**meta, "strategy": "passage-direct"}
+                ))
+            else:
+                # Sub-chunk only large passages, preserving passage-level metadata on each sub-chunk
+                sub_chunks = ChunkingEngine.chunk_recursive(
+                    text=p_text,
+                    doc_id=doc_id,
+                    doc_name=doc_name,
+                    chunk_size=chunk_size,
+                    chunk_overlap=chunk_overlap,
+                    metadata=meta
+                )
+                for sc in sub_chunks:
+                    sc.chunk_index = len(chunks)
+                    sc.id = generate_chunk_id(doc_id, sc.chunk_index, sc.content)
+                    chunks.append(sc)
 
-        docs = []
-        for lang, passages in by_lang.items():
-            lang_name = LANG_NAMES.get(lang, lang)
-            # Create a single text document per language containing all passages
-            lines = [f"MSMARCO-XI {lang_name} ({lang}) — {len(passages)} passages\n"]
-            lines.append("=" * 60 + "\n")
-
-            for p in passages:
-                marker = " [GOLD]" if p["is_selected"] else ""
-                lines.append(f"\n--- [Passage {p['passage_id']}]{marker} ---\n")
-                lines.append(p["text"])
-                lines.append("\n")
-
-            doc_text = "\n".join(lines)
-            doc_name = f"msmarco_xi_{lang}.txt"
-
-            docs.append({
-                "name": doc_name,
-                "content": doc_text.encode("utf-8"),
-                "language": lang,
-                "language_name": lang_name,
-                "passage_count": len(passages),
-                "gold_count": len([p for p in passages if p["is_selected"]]),
-            })
-
-        return docs
+        return chunks
 
 
 # Singleton instance

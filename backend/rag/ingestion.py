@@ -14,12 +14,10 @@ logger = logging.getLogger(__name__)
 
 class IngestionManager:
     def __init__(self):
-        # Maps collection_name -> {doc_id: DocumentInfo}
         self.documents_by_coll: Dict[str, Dict[str, DocumentInfo]] = {
             "enterprise": {},
             "msmarco": {}
         }
-        # Maps collection_name -> {doc_id: raw_text}
         self.raw_texts_by_coll: Dict[str, Dict[str, str]] = {
             "enterprise": {},
             "msmarco": {}
@@ -32,7 +30,6 @@ class IngestionManager:
             "msmarco": None
         }
 
-    # Backward compatibility properties (defaults to enterprise)
     @property
     def documents(self) -> Dict[str, DocumentInfo]:
         return self.documents_by_coll["enterprise"]
@@ -87,7 +84,6 @@ class IngestionManager:
 
         self.raw_texts_by_coll[collection][doc_id] = raw_text
 
-        # Determine category badge and source type
         is_msmarco = name.lower().startswith("msmarco") or collection == "msmarco"
         is_gk = name.lower().startswith("general_knowledge")
         
@@ -161,7 +157,6 @@ class IngestionManager:
     def get_all_documents(self, collection: Optional[str] = None) -> List[DocumentInfo]:
         if collection:
             return list(self.documents_by_coll.get(collection, {}).values())
-        # Return all across all collections
         result = []
         for coll_docs in self.documents_by_coll.values():
             result.extend(coll_docs.values())
@@ -178,34 +173,41 @@ class IngestionManager:
         self.active_chunk_size = chunk_size
         self.active_chunk_overlap = chunk_overlap
 
-        docs = self.documents_by_coll.get(collection, {})
-        raws = self.raw_texts_by_coll.get(collection, {})
-        all_chunks: List[ChunkInfo] = []
+        # Special metadata-preserving path for MSMARCO collection
+        if collection == "msmarco":
+            from backend.rag.msmarco_loader import msmarco_loader
+            if not msmarco_loader.is_loaded:
+                msmarco_loader.load_msmarco_corpus()
+            all_chunks = msmarco_loader.get_passage_chunks(chunk_size, chunk_overlap)
+        else:
+            docs = self.documents_by_coll.get(collection, {})
+            raws = self.raw_texts_by_coll.get(collection, {})
+            all_chunks: List[ChunkInfo] = []
 
-        for doc_id, doc in docs.items():
-            raw_text = raws.get(doc_id, "")
-            if not raw_text.strip():
-                continue
+            for doc_id, doc in docs.items():
+                raw_text = raws.get(doc_id, "")
+                if not raw_text.strip():
+                    continue
 
-            chunks = ChunkingEngine.chunk_document(
-                text=raw_text,
-                doc_id=doc_id,
-                doc_name=doc.name,
-                strategy=strategy,
-                chunk_size=chunk_size,
-                chunk_overlap=chunk_overlap,
-                metadata={
-                    "is_sample": doc.is_sample,
-                    "file_type": doc.file_type,
-                    "source_type": doc.source_type,
-                    "category_badge": doc.category_badge,
-                    "source_name": doc.name,
-                    "language": doc.language,
-                    "collection": collection
-                }
-            )
-            doc.chunks_count = len(chunks)
-            all_chunks.extend(chunks)
+                chunks = ChunkingEngine.chunk_document(
+                    text=raw_text,
+                    doc_id=doc_id,
+                    doc_name=doc.name,
+                    strategy=strategy,
+                    chunk_size=chunk_size,
+                    chunk_overlap=chunk_overlap,
+                    metadata={
+                        "is_sample": doc.is_sample,
+                        "file_type": doc.file_type,
+                        "source_type": doc.source_type,
+                        "category_badge": doc.category_badge,
+                        "source_name": doc.name,
+                        "language": doc.language,
+                        "collection": collection
+                    }
+                )
+                doc.chunks_count = len(chunks)
+                all_chunks.extend(chunks)
 
         retriever = retriever_registry.get_retriever(collection)
         texts_to_embed = [c.content for c in all_chunks]
@@ -220,8 +222,8 @@ class IngestionManager:
 
     def get_stats(self, collection: str = "enterprise") -> KnowledgeBaseStats:
         docs = self.documents_by_coll.get(collection, {})
-        total_chunks = sum(d.chunks_count for d in docs.values())
         retriever = retriever_registry.get_retriever(collection)
+        total_chunks = retriever.total_chunks
         return KnowledgeBaseStats(
             documents_count=len(docs),
             chunks_count=total_chunks,
@@ -249,7 +251,6 @@ class IngestionManager:
                     content = f.read()
                 self.ingest_document(p.name, content, is_sample=True, collection="enterprise", auto_reindex=False)
 
-        # Ingest uploads if any
         if settings.UPLOAD_DIR.exists():
             upload_files = sorted(list(settings.UPLOAD_DIR.glob("*.*")), key=lambda p: p.name)
             for p in upload_files:
@@ -262,27 +263,41 @@ class IngestionManager:
         logger.info(f"Enterprise Knowledge Base initialized with {len(self.documents_by_coll['enterprise'])} documents.")
 
     def load_msmarco_knowledge_base(self):
-        """Loads MSMARCO-XI multilingual passages into the msmarco collection."""
+        """
+        Loads MSMARCO-XI multilingual passages directly into the msmarco collection
+        with intact passage-level metadata (passage_id, query_id, is_selected).
+        """
         if not settings.MSMARCO_ENABLED:
             logger.info("MSMARCO loading is disabled.")
             return
 
         from backend.rag.msmarco_loader import msmarco_loader
         msmarco_loader.load_msmarco_corpus()
-        text_docs = msmarco_loader.get_passages_as_text_docs()
-
-        logger.info(f"Ingesting {len(text_docs)} MSMARCO-XI synthetic corpus documents into msmarco collection.")
-        for d in text_docs:
-            self.ingest_document(
-                name=d["name"],
-                content_bytes=d["content"],
+        
+        # Ingest document records per language
+        for lang in settings.MSMARCO_LANGUAGES:
+            lang = lang.strip()
+            lang_passages = [p for p in msmarco_loader.passage_docs if p["language"] == lang]
+            doc_id = f"msmarco_{lang}"
+            doc_name = f"msmarco_xi_{lang}.txt"
+            
+            doc_info = DocumentInfo(
+                id=doc_id,
+                name=doc_name,
+                size_bytes=sum(len(p["text"].encode("utf-8")) for p in lang_passages),
+                file_type="TXT",
+                chunks_count=len(lang_passages),
+                uploaded_at=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
                 is_sample=True,
-                collection="msmarco",
-                language=d["language"],
-                auto_reindex=False
+                source_type="msmarco_xi",
+                category_badge="MSMARCO",
+                language=lang,
+                collection="msmarco"
             )
+            self.documents_by_coll["msmarco"][doc_id] = doc_info
 
+        # Build index preserving passage metadata
         self.reindex_all(collection="msmarco", strategy=self.active_strategy, chunk_size=self.active_chunk_size, chunk_overlap=self.active_chunk_overlap)
-        logger.info(f"MSMARCO Knowledge Base initialized with {len(self.documents_by_coll['msmarco'])} documents.")
+        logger.info(f"MSMARCO Knowledge Base initialized with {len(self.documents_by_coll['msmarco'])} language collections.")
 
 ingestion_manager = IngestionManager()
