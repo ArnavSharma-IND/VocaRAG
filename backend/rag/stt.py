@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 class SarvamSTTResponse:
     transcript: str
     language_code: str
+    mode: str
     latency_ms: float
     error: Optional[str] = None
 
@@ -30,7 +31,7 @@ class SarvamSTT:
         self,
         audio_bytes: bytes,
         language_code: Optional[str] = None,
-        mode: str = "transcribe",
+        mode: str = "transcribe",  # transcribe | translate | codemix
         filename: str = "audio.wav",
         max_retries: int = 2
     ) -> SarvamSTTResponse:
@@ -38,6 +39,7 @@ class SarvamSTT:
             return SarvamSTTResponse(
                 transcript="",
                 language_code=language_code or self.default_language,
+                mode=mode,
                 latency_ms=0.0,
                 error="Sarvam API key not configured. Set SARVAM_API_KEY in .env."
             )
@@ -74,6 +76,7 @@ class SarvamSTT:
                         return SarvamSTTResponse(
                             transcript=transcript,
                             language_code=detected_lang,
+                            mode=mode,
                             latency_ms=latency_ms,
                         )
                     elif resp.status_code in [429, 500, 503] and attempt < max_retries:
@@ -85,6 +88,7 @@ class SarvamSTT:
                         return SarvamSTTResponse(
                             transcript="",
                             language_code=lang,
+                            mode=mode,
                             latency_ms=latency_ms,
                             error=f"Sarvam API error {resp.status_code}: {error_text}"
                         )
@@ -97,6 +101,7 @@ class SarvamSTT:
                         return SarvamSTTResponse(
                             transcript="",
                             language_code=lang,
+                            mode=mode,
                             latency_ms=latency_ms,
                             error=f"Connection error: {str(e)}"
                         )
@@ -105,6 +110,7 @@ class SarvamSTT:
         return SarvamSTTResponse(
             transcript="",
             language_code=lang,
+            mode=mode,
             latency_ms=latency_ms,
             error="Max retries exceeded."
         )

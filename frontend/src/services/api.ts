@@ -8,6 +8,7 @@ import type {
   BenchmarkSummary,
   IREvalResult,
   GuardrailCheckResponse,
+  TTSResponse,
   SystemStatus,
 } from '../types';
 
@@ -53,7 +54,7 @@ export const api = {
     audioBlob: Blob,
     languageCode: string = 'hi-IN',
     mode: string = 'transcribe'
-  ): Promise<{ transcript: string; language: string; latency_ms: number; error?: string }> {
+  ): Promise<{ transcript: string; language: string; mode: string; latency_ms: number; error?: string }> {
     const formData = new FormData();
     formData.append('file', audioBlob, 'mic_recording.webm');
     formData.append('language_code', languageCode);
@@ -63,7 +64,20 @@ export const api = {
       method: 'POST',
       body: formData,
     });
-    return handleResponse<{ transcript: string; language: string; latency_ms: number; error?: string }>(res);
+    return handleResponse<{ transcript: string; language: string; mode: string; latency_ms: number; error?: string }>(res);
+  },
+
+  async synthesizeSpeech(
+    text: string,
+    languageCode: string = 'hi-IN',
+    speaker: string = 'meera'
+  ): Promise<TTSResponse> {
+    const res = await fetch(`${API_BASE_URL}/tts/synthesize`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, language_code: languageCode, speaker }),
+    });
+    return handleResponse<TTSResponse>(res);
   },
 
   async uploadDocument(file: File, collection: string = 'enterprise'): Promise<DocumentInfo> {
@@ -154,12 +168,15 @@ export const api = {
   },
 
   async checkGuardrails(query: string): Promise<GuardrailCheckResponse> {
+    const t0 = performance.now();
     const res = await fetch(`${API_BASE_URL}/guardrails/check`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query }),
     });
-    return handleResponse<GuardrailCheckResponse>(res);
+    const data = await handleResponse<GuardrailCheckResponse>(res);
+    data.latency_ms = Math.round(performance.now() - t0);
+    return data;
   },
 
   async getGuardrailRules(): Promise<any> {

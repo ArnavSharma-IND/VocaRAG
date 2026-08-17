@@ -161,6 +161,16 @@ export interface GuardrailCheckResponse {
   reason?: string | null;
   risk_level: 'LOW' | 'MEDIUM' | 'HIGH';
   recommended_action: 'ALLOW' | 'BLOCK' | 'ABSTAIN';
+  latency_ms?: number;
+}
+
+export interface TTSResponse {
+  audio_base64?: string | null;
+  content_type: string;
+  language_code: string;
+  speaker: string;
+  latency_ms: number;
+  error?: string | null;
 }
 
 export interface SystemStatus {

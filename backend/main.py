@@ -7,7 +7,7 @@ from backend.rag.embeddings import embedding_engine
 from backend.rag.ingestion import ingestion_manager
 from backend.rag.retriever import retriever_registry
 from backend.models.schemas import QueryRequest
-from backend.routes import ask, ingestion, retrieval, benchmark, guardrails, system, stt
+from backend.routes import ask, ingestion, retrieval, benchmark, guardrails, system, stt, tts
 
 logging.basicConfig(
     level=logging.INFO,
@@ -18,7 +18,7 @@ logger = logging.getLogger("vocarag.main")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("==================================================")
-    logger.info("Initializing VocaRAG Core Backend v2.0...")
+    logger.info("Initializing VocaRAG Core Backend v2.1...")
     logger.info("==================================================")
     
     # 1. Warm up embedding engine
@@ -65,6 +65,7 @@ app.add_middleware(
 # Mount Routers
 app.include_router(ask.router)
 app.include_router(stt.router)
+app.include_router(tts.router)
 app.include_router(ingestion.router)
 app.include_router(retrieval.router)
 app.include_router(benchmark.router)
@@ -72,7 +73,7 @@ app.include_router(guardrails.router)
 app.include_router(system.router)
 
 @app.get("/api/debug/rag")
-async def debug_rag(collection: str = "enterprise"):
+async def debug_rag(collection: str = "msmarco"):
     stats = ingestion_manager.get_stats(collection)
     retriever = retriever_registry.get_retriever(collection)
     return {
