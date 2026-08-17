@@ -11,7 +11,7 @@ class SourceItem(BaseModel):
     similarity: float
     relevance_tier: str = "Medium"  # High | Medium | Low
     source_type: str = "document"  # general_knowledge | sample_policy | user_upload | msmarco_xi
-    category_label: str = "DOCUMENT"  # GENERAL KNOWLEDGE | POLICY | DOCUMENT | MSMARCO
+    category_label: str = "DOCUMENT"  # GENERAL KNOWLEDGE | POLICY | DOCUMENT | MSMARCO (HINDI) etc.
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 class LatencyBreakdown(BaseModel):
@@ -121,7 +121,19 @@ class BenchmarkQueryRun(BaseModel):
     answer_preview: str
     timestamp: str
 
+class IREvalResult(BaseModel):
+    total_queries: int
+    recall_at_1: float
+    recall_at_3: float
+    recall_at_5: float
+    recall_at_10: float
+    mrr: float
+    avg_retrieval_latency_ms: float
+    per_language: Dict[str, Dict[str, float]] = Field(default_factory=dict)
+    evaluated_at: str
+
 class BenchmarkSummary(BaseModel):
+    collection: str = "msmarco"
     total_queries: int
     successful_queries: int
     p50_total_ms: float
@@ -139,8 +151,8 @@ class BenchmarkSummary(BaseModel):
     target_ms: float = 200.0
     meets_retrieval_target: bool = True
     meets_e2e_target: bool = True
-    # Keep old field for backward compat
     meets_target: bool = True
+    ir_eval: Optional[IREvalResult] = None
     runs: List[BenchmarkQueryRun] = Field(default_factory=list)
 
 class GuardrailCheckRequest(BaseModel):
