@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, Send, RotateCcw, Keyboard, Volume2, AlertCircle, Globe, Layers } from 'lucide-react';
+import { Mic, Send, RotateCcw, Keyboard, Volume2, AlertCircle, Globe, Layers, ArrowRightLeft } from 'lucide-react';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 
 interface VoiceHeroProps {
@@ -36,6 +36,7 @@ export const VoiceHero: React.FC<VoiceHeroProps> = ({
   onCollectionChange
 }) => {
   const [selectedLanguage, setSelectedLanguage] = useState<string>('hi-IN');
+  const [sttMode, setSttMode] = useState<string>('transcribe'); // transcribe | translate
   const [collection, setCollection] = useState<string>(activeCollection);
   const [inputQuery, setInputQuery] = useState<string>(initialQuery);
   const [isTypingMode, setIsTypingMode] = useState<boolean>(false);
@@ -97,7 +98,7 @@ export const VoiceHero: React.FC<VoiceHeroProps> = ({
   const stateLabel = isListening
     ? 'LISTENING VIA MEDIA RECORDER'
     : isProcessingSTT
-    ? 'TRANSCRIBING (SARVAM AI SAARAS V3)...'
+    ? `TRANSCRIBING (${sttMode === 'translate' ? 'SARVAM TRANSLATE MODE' : 'SARVAM SAARAS V3'})...`
     : isLoading
     ? 'PROCESSING RAG PIPELINE...'
     : 'CLICK MIC TO SPEAK IN INDIC OR ENGLISH';
@@ -106,7 +107,7 @@ export const VoiceHero: React.FC<VoiceHeroProps> = ({
 
   return (
     <section className="relative pt-6 pb-12 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center">
-      {/* Top Mode Selectors: Collection & Language */}
+      {/* Top Mode Selectors: Collection & Language & STT Mode */}
       <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
         {/* Collection Selector Tabs */}
         <div className="inline-flex p-1 bg-[#111311] rounded-xl border border-[rgba(243,235,221,0.12)]">
@@ -149,6 +150,33 @@ export const VoiceHero: React.FC<VoiceHeroProps> = ({
             <option value="en-IN" className="bg-[#111311] text-[#F3EBDD]">English (Indian / en-IN)</option>
             <option value="bn-IN" className="bg-[#111311] text-[#F3EBDD]">Bengali (বাংলা / bn-IN)</option>
           </select>
+        </div>
+
+        {/* STT Translate Mode Switcher */}
+        <div className="inline-flex p-1 bg-[#111311] rounded-xl border border-[rgba(243,235,221,0.12)]">
+          <button
+            type="button"
+            onClick={() => setSttMode('transcribe')}
+            className={`flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[11px] font-mono transition-all ${
+              sttMode === 'transcribe'
+                ? 'bg-[#1C563E] text-[#F3EBDD]'
+                : 'text-[#858983] hover:text-[#F3EBDD]'
+            }`}
+          >
+            <span>Direct STT</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setSttMode('translate')}
+            className={`flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[11px] font-mono transition-all ${
+              sttMode === 'translate'
+                ? 'bg-[#1C563E] text-[#F3EBDD]'
+                : 'text-[#858983] hover:text-[#F3EBDD]'
+            }`}
+          >
+            <ArrowRightLeft className="w-3 h-3" />
+            <span>Indic $\to$ English Pivot</span>
+          </button>
         </div>
       </div>
 

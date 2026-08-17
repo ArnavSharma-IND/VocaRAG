@@ -1,126 +1,75 @@
 import React from 'react';
-import { Play } from 'lucide-react';
+import { Volume2, ShieldCheck } from 'lucide-react';
 
-export type ActiveTab = 'ask' | 'knowledge' | 'retrieval' | 'benchmarks' | 'guardrails' | 'system';
+export type ActiveTab = 'ask' | 'kb' | 'retrieval' | 'benchmark' | 'guardrails';
 
 interface HeaderProps {
   activeTab: ActiveTab;
   onTabChange: (tab: ActiveTab) => void;
-  systemMode: string;
-  onLaunchDemoTour: () => void;
+  systemStatus?: any;
 }
 
-export const Header: React.FC<HeaderProps> = ({
-  activeTab,
-  onTabChange,
-  systemMode,
-  onLaunchDemoTour,
-}) => {
-  const navItems: { id: ActiveTab; label: string }[] = [
-    { id: 'ask', label: 'ASK' },
-    { id: 'knowledge', label: 'KNOWLEDGE' },
-    { id: 'retrieval', label: 'RETRIEVAL' },
-    { id: 'benchmarks', label: 'BENCHMARK' },
-    { id: 'guardrails', label: 'GUARDRAILS' },
-    { id: 'system', label: 'SYSTEM' },
-  ];
-
-  const isLive = systemMode === 'Live';
-
+export const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
   return (
-    <header className="sticky top-0 z-40 bg-[#080908]/90 backdrop-blur-md border-b border-[rgba(243,235,221,0.12)]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14">
-          {/* Logo & Identity */}
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={() => onTabChange('ask')}
-              className="flex items-center space-x-2.5 text-left group focus:outline-none"
-            >
-              <div className="w-6 h-6 rounded bg-[#123B2A] border border-[#1C563E] flex items-center justify-center text-[#F3EBDD] shadow-sm group-hover:border-[#297A59] transition-colors">
-                <span className="w-2 h-2 bg-[#A8D5BA] rounded-xs" />
-              </div>
-              <div className="flex flex-col">
-                <div className="flex items-center space-x-2">
-                  <span className="font-bold text-base tracking-tight text-[#F3EBDD] font-mono">
-                    Voca<span className="text-[#1C563E]">RAG</span>
-                  </span>
-                  <span className="text-[9px] font-mono text-[#858983] uppercase tracking-widest hidden sm:inline-block">
-                    VOICE-ENABLED RAG
-                  </span>
-                </div>
-              </div>
-            </button>
+    <header className="sticky top-0 z-40 bg-[#080908]/80 backdrop-blur-xl border-b border-[rgba(243,235,221,0.08)] px-4 sm:px-8 py-3.5">
+      <div className="max-w-7xl mx-auto flex items-center justify-between">
+        {/* Brand */}
+        <div className="flex items-center space-x-3 cursor-pointer" onClick={() => onTabChange('ask')}>
+          <div className="w-8 h-8 rounded-xl bg-[#1C563E] border border-[#A8D5BA]/40 flex items-center justify-center shadow-lg">
+            <Volume2 className="w-4 h-4 text-[#F3EBDD]" />
           </div>
-
-          {/* Center Navigation: Minimal Pill Tabs */}
-          <nav className="hidden md:flex items-center space-x-1 border border-[rgba(243,235,221,0.12)] bg-[#111311] px-1 py-0.5 rounded-full">
-            {navItems.map((item) => {
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => onTabChange(item.id)}
-                  className={`px-3 py-1 rounded-full text-[11px] font-mono tracking-wider transition-all ${
-                    isActive
-                      ? 'bg-[#171a17] text-[#F3EBDD] font-semibold border border-[rgba(243,235,221,0.22)] shadow-xs'
-                      : 'text-[#858983] hover:text-[#F3EBDD] hover:bg-[#171a17]/50'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              );
-            })}
-          </nav>
-
-          {/* Right Actions: System Status & Understated Badge */}
-          <div className="flex items-center space-x-3">
-            {/* System Ready Pill */}
-            <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono bg-[#111311] border border-[rgba(243,235,221,0.14)] text-[#C9C2B5]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#1C563E] animate-pulse" />
-              <span>{isLive ? 'SYSTEM LIVE' : 'SYSTEM READY'}</span>
-            </div>
-
-            {/* HHGoa Task 2 Badge */}
-            <div className="hidden lg:flex flex-col text-right leading-none">
-              <span className="text-[9px] font-mono text-[#858983] uppercase tracking-widest">
-                HHGoa'26
-              </span>
-              <span className="text-[9px] font-mono text-[#C9C2B5] font-semibold">
-                TASK #2
-              </span>
-            </div>
-
-            {/* Launch Demo Button */}
-            <button
-              onClick={onLaunchDemoTour}
-              className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono font-medium bg-[#171a17] text-[#F3EBDD] hover:bg-[#1E231E] border border-[rgba(243,235,221,0.18)] transition-all hover-lift"
-            >
-              <Play className="w-2.5 h-2.5 fill-[#F3EBDD]" />
-              <span className="hidden sm:inline">DEMO</span>
-            </button>
+          <div>
+            <span className="font-editorial text-lg font-bold text-[#F3EBDD] tracking-tight">VocaRAG</span>
+            <span className="ml-2 text-[9px] px-2 py-0.5 rounded-full bg-[#1C563E]/30 text-[#A8D5BA] font-mono border border-[#1C563E]/40">
+              v2.1
+            </span>
           </div>
         </div>
 
-        {/* Mobile Navigation */}
-        <div className="md:hidden flex overflow-x-auto space-x-1 py-1.5 border-t border-[rgba(243,235,221,0.08)]">
-          {navItems.map((item) => {
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => onTabChange(item.id)}
-                className={`px-2.5 py-1 rounded-md text-[10px] font-mono whitespace-nowrap ${
-                  isActive
-                    ? 'bg-[#171a17] text-[#F3EBDD] font-bold border border-[rgba(243,235,221,0.2)]'
-                    : 'text-[#858983] hover:bg-[#111311]'
-                }`}
-              >
-                {item.label}
-              </button>
-            );
-          })}
-        </div>
+        {/* Navigation Tabs */}
+        <nav className="flex items-center space-x-1 sm:space-x-2 text-xs font-mono">
+          <button
+            onClick={() => onTabChange('ask')}
+            className={`px-3 py-1.5 rounded-xl transition-all ${
+              activeTab === 'ask'
+                ? 'bg-[#1C563E] text-[#F3EBDD] font-semibold shadow-sm'
+                : 'text-[#858983] hover:text-[#F3EBDD] hover:bg-[#171A17]'
+            }`}
+          >
+            Voice Q&A
+          </button>
+          <button
+            onClick={() => onTabChange('kb')}
+            className={`px-3 py-1.5 rounded-xl transition-all ${
+              activeTab === 'kb'
+                ? 'bg-[#1C563E] text-[#F3EBDD] font-semibold shadow-sm'
+                : 'text-[#858983] hover:text-[#F3EBDD] hover:bg-[#171A17]'
+            }`}
+          >
+            Index Studio
+          </button>
+          <button
+            onClick={() => onTabChange('benchmark')}
+            className={`px-3 py-1.5 rounded-xl transition-all ${
+              activeTab === 'benchmark'
+                ? 'bg-[#1C563E] text-[#F3EBDD] font-semibold shadow-sm'
+                : 'text-[#858983] hover:text-[#F3EBDD] hover:bg-[#171A17]'
+            }`}
+          >
+            Benchmark Lab
+          </button>
+          <button
+            onClick={() => onTabChange('guardrails')}
+            className={`px-3 py-1.5 rounded-xl transition-all flex items-center space-x-1 ${
+              activeTab === 'guardrails'
+                ? 'bg-[#1C563E] text-[#F3EBDD] font-semibold shadow-sm'
+                : 'text-[#858983] hover:text-[#F3EBDD] hover:bg-[#171A17]'
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>Security Lab</span>
+          </button>
+        </nav>
       </div>
     </header>
   );

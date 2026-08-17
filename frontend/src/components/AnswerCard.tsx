@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { ShieldAlert, ArrowUpRight, Info } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { ArrowUpRight, Info, Volume2, Square, Award } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { AskResponse, SourceItem } from '../types';
 import { SourceDrawer } from './SourceDrawer';
+import { api } from '../services/api';
 
 interface AnswerCardProps {
   response: AskResponse;
@@ -10,203 +11,175 @@ interface AnswerCardProps {
 
 export const AnswerCard: React.FC<AnswerCardProps> = ({ response }) => {
   const [selectedSource, setSelectedSource] = useState<SourceItem | null>(null);
+  const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
+  const [isSynthesizingTTS, setIsSynthesizingTTS] = useState<boolean>(false);
+  const [ttsError, setTtsError] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const { query, answer, abstained, confidence, sources, mode, retrieval_explanation, latency } =
-    response;
+  const { query, answer, abstained, confidence, sources, retrieval_explanation } = response;
+
+  const hasGoldPassage = sources.some(s => s.metadata?.is_selected === true || s.metadata?.is_selected === 1);
+
+  const handlePlayTTS = async () => {
+    if (isPlayingAudio && audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      setIsPlayingAudio(false);
+      return;
+    }
+
+    setTtsError(null);
+    setIsSynthesizingTTS(true);
+
+    try {
+      // Determine language code based on source language or query characters
+      let targetLang = 'hi-IN';
+      const hasTelugu = /[\u0C00-\u0C7F]/.test(answer) || /[\u0C00-\u0C7F]/.test(query);
+      const hasHindi = /[\u0900-\u097F]/.test(answer) || /[\u0900-\u097F]/.test(query);
+
+      if (hasTelugu) targetLang = 'te-IN';
+      else if (hasHindi) targetLang = 'hi-IN';
+      else targetLang = 'en-IN';
+
+      const ttsResult = await api.synthesizeSpeech(answer, targetLang, 'meera');
+
+      if (ttsResult.audio_base64) {
+        const audioSrc = `data:${ttsResult.content_type || 'audio/wav'};base64,${ttsResult.audio_base64}`;
+        const audio = new Audio(audioSrc);
+        audioRef.current = audio;
+
+        audio.onplay = () => setIsPlayingAudio(true);
+        audio.onended = () => setIsPlayingAudio(false);
+        audio.onerror = () => {
+          setIsPlayingAudio(false);
+          setTtsError('Audio playback failed.');
+        };
+
+        await audio.play();
+      } else {
+        setTtsError(ttsResult.error || 'TTS audio generation failed.');
+      }
+    } catch (err: any) {
+      console.error('TTS error:', err);
+      setTtsError(err.message || 'Could not connect to Sarvam Bulbul TTS');
+    } finally {
+      setIsSynthesizingTTS(false);
+    }
+  };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 18 }}
+      initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      className="w-full max-w-4xl mx-auto my-6 px-4 font-mono"
+      className="p-6 sm:p-8 rounded-3xl bg-[#111311] border border-[rgba(243,235,221,0.14)] shadow-2xl space-y-6 font-sans"
     >
-      <div className="bg-[#111311] rounded-3xl p-6 sm:p-8 border border-[rgba(243,235,221,0.14)] shadow-2xl relative overflow-hidden">
-        {/* Top Header Row */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[rgba(243,235,221,0.12)]">
-          <div className="flex items-center space-x-2.5">
-            {abstained ? (
-              <span className="w-2 h-2 rounded-full bg-[#D9C48A]" />
-            ) : (
-              <span className="w-2 h-2 rounded-full bg-[#1C563E] animate-pulse" />
-            )}
-            <div>
-              <h2 className="text-xs font-bold tracking-widest text-[#858983] uppercase">
-                {abstained ? 'SYSTEM ABSTENTION' : 'GROUNDED ANSWER'}
-              </h2>
-            </div>
-          </div>
-
-          {/* Right Badges: Grounding & Mode */}
-          <div className="flex items-center space-x-2 text-[11px]">
-            {abstained ? (
-              <span className="px-2.5 py-0.5 rounded-full bg-[#D9C48A]/10 border border-[#D9C48A]/30 text-[#D9C48A]">
-                ○ INSUFFICIENT EVIDENCE
-              </span>
-            ) : (
-              <span className="px-2.5 py-0.5 rounded-full bg-[#123B2A] border border-[#1C563E] text-[#A8D5BA] flex items-center space-x-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#A8D5BA]" />
-                <span>GROUNDED ({Math.round(confidence * 100)}%)</span>
-              </span>
-            )}
-            <span className="px-2.5 py-0.5 rounded-full bg-[#171A17] border border-[rgba(243,235,221,0.14)] text-[#C9C2B5]">
-              {mode.toUpperCase()}
+      {/* Top Header & Badges */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(243,235,221,0.08)] pb-4">
+        <div className="flex items-center space-x-2">
+          <span className="text-xs font-mono font-semibold text-[#858983] uppercase tracking-wider">
+            ANSWER
+          </span>
+          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold ${
+            abstained ? 'bg-[#D9C48A]/20 text-[#D9C48A]' : 'bg-[#1C563E] text-[#A8D5BA]'
+          }`}>
+            {abstained ? 'ABSTAINED' : 'GROUNDED'}
+          </span>
+          {hasGoldPassage && (
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-[#D9C48A]/20 text-[#D9C48A] border border-[#D9C48A]/30 flex items-center gap-1">
+              <Award className="w-3 h-3" />
+              <span>MS MARCO GOLD MATCH</span>
             </span>
-          </div>
-        </div>
-
-        {/* User Query Echo */}
-        <div className="my-4 text-xs text-[#858983] bg-[#080908] px-3.5 py-2 rounded-xl border border-[rgba(243,235,221,0.08)] flex items-center space-x-2">
-          <span className="text-[#C9C2B5] font-semibold">QUERY:</span>
-          <span className="text-[#F3EBDD]">“{query}”</span>
-        </div>
-
-        {/* Answer Content in Large Editorial Typography */}
-        <div className="my-6">
-          {abstained ? (
-            <div className="p-5 rounded-2xl bg-[#171A17] border border-[#D9C48A]/30 text-[#F3EBDD]">
-              <div className="flex items-start space-x-3">
-                <ShieldAlert className="w-5 h-5 text-[#D9C48A] flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-medium text-sm sm:text-base leading-relaxed text-[#F3EBDD] font-sans">
-                    {answer}
-                  </p>
-                  <p className="mt-2 text-xs text-[#858983]">
-                    Guardrails prevented hallucination because retrieved context similarity fell below the strict evidence threshold.
-                  </p>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="relative">
-              <p className="text-base sm:text-lg text-[#F3EBDD] leading-relaxed font-sans font-normal border-l-2 border-[#1C563E] pl-4 py-1">
-                {answer}
-              </p>
-            </div>
           )}
         </div>
 
-        {/* Retrieval Explanation Banner */}
-        {retrieval_explanation && (
-          <div className="mt-4 p-3 bg-[#080908] rounded-xl border border-[rgba(243,235,221,0.1)] text-xs text-[#858983] flex items-start space-x-2">
-            <Info className="w-3.5 h-3.5 text-[#1C563E] flex-shrink-0 mt-0.5" />
-            <div>
-              <span className="text-[#C9C2B5] font-semibold">RATIONALE: </span>
-              {retrieval_explanation}
-            </div>
-          </div>
-        )}
-
-        {/* Technical Latency Readout + Sources */}
-        <div className="mt-8 pt-6 border-t border-[rgba(243,235,221,0.12)] grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Sources Column (2 cols) */}
-          <div className="md:col-span-2">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#858983]">
-                SOURCES / RETRIEVED CONTEXT ({sources.length})
-              </h3>
-              <span className="text-[10px] text-[#858983]">CLICK TO INSPECT</span>
-            </div>
-
-            {sources && sources.length > 0 ? (
-              <div className="divide-y divide-[rgba(243,235,221,0.08)] border-y border-[rgba(243,235,221,0.08)]">
-                {sources.map((src, idx) => {
-                  const isGK =
-                    src.source_type === 'general_knowledge' ||
-                    src.category_label === 'GENERAL KNOWLEDGE' ||
-                    src.doc_name.toLowerCase().startsWith('general_knowledge');
-                  const label = src.category_label || (isGK ? 'GENERAL KNOWLEDGE' : 'POLICY');
-
-                  return (
-                    <button
-                      key={src.id || idx}
-                      onClick={() => setSelectedSource(src)}
-                      className="w-full text-left py-3 px-2 flex items-center justify-between hover:bg-[#171A17]/60 transition-colors group focus:outline-none"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <span className="text-xs text-[#858983] font-bold">
-                          {String(idx + 1).padStart(2, '0')}
-                        </span>
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-xs font-medium text-[#F3EBDD] group-hover:text-[#A8D5BA] transition-colors">
-                              {src.doc_name}
-                            </span>
-                            <span
-                              className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${
-                                isGK
-                                  ? 'bg-[#123B2A] text-[#A8D5BA] border border-[#1C563E]'
-                                  : 'bg-[#171A17] text-[#C9C2B5] border border-[rgba(243,235,221,0.12)]'
-                              }`}
-                            >
-                              {label}
-                            </span>
-                          </div>
-                          <div className="text-[10px] text-[#858983]">
-                            Chunk #{src.chunk_index}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-3 text-right">
-                        <span className="text-xs text-[#A8D5BA] font-semibold">
-                          {Math.round(src.similarity * 100)}%
-                        </span>
-                        <ArrowUpRight className="w-3.5 h-3.5 text-[#858983] group-hover:text-[#F3EBDD] transition-colors" />
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+        <div className="flex items-center space-x-2">
+          {/* Sarvam Bulbul TTS Voice Button */}
+          <button
+            onClick={handlePlayTTS}
+            disabled={isSynthesizingTTS}
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-semibold transition-all ${
+              isPlayingAudio
+                ? 'bg-[#1C563E] text-[#F3EBDD] animate-pulse shadow-md'
+                : 'bg-[#171A17] hover:bg-[#1E231E] text-[#A8D5BA] border border-[rgba(243,235,221,0.12)]'
+            }`}
+          >
+            {isSynthesizingTTS ? (
+              <div className="w-3.5 h-3.5 border-2 border-[#A8D5BA] border-t-transparent rounded-full animate-spin" />
+            ) : isPlayingAudio ? (
+              <Square className="w-3.5 h-3.5 fill-current" />
             ) : (
-              <p className="text-xs text-[#858983]">No sources retrieved.</p>
+              <Volume2 className="w-3.5 h-3.5" />
             )}
-          </div>
+            <span>
+              {isSynthesizingTTS
+                ? 'SYNTHESIZING (BULBUL)...'
+                : isPlayingAudio
+                ? 'STOP VOICE'
+                : 'LISTEN ANSWER (BULBUL TTS)'}
+            </span>
+          </button>
 
-          {/* Technical Readout Column (1 col) */}
-          <div className="md:col-span-1 bg-[#080908] p-4 rounded-2xl border border-[rgba(243,235,221,0.1)] flex flex-col justify-between text-xs">
-            <div>
-              <span className="text-[9px] font-bold tracking-widest text-[#858983] uppercase block mb-3">
-                PIPELINE LATENCY
-              </span>
-
-              <div className="space-y-1.5 text-[11px] text-[#C9C2B5]">
-                <div className="flex justify-between">
-                  <span className="text-[#858983]">STT</span>
-                  <span>{latency.voice_stt_ms !== undefined && latency.voice_stt_ms !== null ? `${latency.voice_stt_ms}ms` : '—'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#858983]">GUARDRAIL</span>
-                  <span>{latency.guardrail_ms}ms</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#858983]">EMBED</span>
-                  <span>{latency.embedding_ms}ms</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#858983]">RETRIEVE</span>
-                  <span>{latency.retrieval_ms}ms</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#858983]">GENERATE</span>
-                  <span>{latency.generation_ms}ms</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-3 mt-3 border-t border-[rgba(243,235,221,0.12)] flex items-center justify-between font-bold">
-              <span className="text-[#F3EBDD]">TOTAL</span>
-              <span className="text-[#A8D5BA]">{latency.total_rag_ms}ms</span>
-            </div>
-          </div>
+          <span className="text-xs text-[#858983] font-mono">
+            CONFIDENCE: <strong className="text-[#F3EBDD]">{Math.round(confidence * 100)}%</strong>
+          </span>
         </div>
       </div>
 
-      {/* Slide-out Source Detail Drawer */}
-      <SourceDrawer
-        source={selectedSource}
-        onClose={() => setSelectedSource(null)}
-      />
+      {/* TTS Error Banner */}
+      {ttsError && (
+        <div className="text-xs text-[#D58A8A] bg-[#D58A8A]/10 px-3 py-1.5 rounded-lg font-mono">
+          {ttsError}
+        </div>
+      )}
+
+      {/* Answer Body */}
+      <div className="space-y-4">
+        <div className="text-base sm:text-lg text-[#F3EBDD] leading-relaxed font-serif whitespace-pre-wrap">
+          {answer}
+        </div>
+      </div>
+
+      {/* Retrieval Explanation */}
+      {retrieval_explanation && (
+        <div className="p-4 rounded-2xl bg-[#171A17] border border-[rgba(243,235,221,0.06)] flex items-start space-x-2.5 text-xs text-[#858983]">
+          <Info className="w-4 h-4 text-[#A8D5BA] flex-shrink-0 mt-0.5" />
+          <p className="leading-relaxed">{retrieval_explanation}</p>
+        </div>
+      )}
+
+      {/* Retrieved Sources Citation Carousel/Pills */}
+      {sources.length > 0 && (
+        <div className="space-y-2 pt-2 border-t border-[rgba(243,235,221,0.08)]">
+          <span className="text-[10px] text-[#858983] uppercase tracking-wider font-mono">
+            EVIDENCE CITATIONS ({sources.length}):
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {sources.map((src, idx) => {
+              const isGold = src.metadata?.is_selected === true || src.metadata?.is_selected === 1;
+              return (
+                <button
+                  key={src.id || idx}
+                  onClick={() => setSelectedSource(src)}
+                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border text-xs font-mono transition-all hover-lift ${
+                    isGold
+                      ? 'bg-[#1C563E]/40 border-[#D9C48A]/50 text-[#F3EBDD]'
+                      : 'bg-[#171A17] hover:bg-[#1E231E] border-[rgba(243,235,221,0.12)] text-[#C9C2B5]'
+                  }`}
+                >
+                  {isGold && <Award className="w-3 h-3 text-[#D9C48A]" />}
+                  <span className="font-semibold text-[#A8D5BA]">[Source {idx + 1}]</span>
+                  <span className="truncate max-w-[140px]">{src.doc_name}</span>
+                  <span className="text-[#858983]">({Math.round(src.similarity * 100)}%)</span>
+                  <ArrowUpRight className="w-3 h-3 text-[#858983]" />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Drawer */}
+      <SourceDrawer source={selectedSource} onClose={() => setSelectedSource(null)} />
     </motion.div>
   );
 };
