@@ -2,6 +2,9 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from pathlib import Path
 from backend.config import settings
 from backend.rag.embeddings import embedding_engine
 from backend.rag.ingestion import ingestion_manager
@@ -86,15 +89,32 @@ async def debug_rag(collection: str = "msmarco"):
         "index_ready": retriever.is_indexed
     }
 
-@app.get("/")
-async def root():
-    return {
-        "project": settings.PROJECT_NAME,
-        "tagline": settings.TAGLINE,
-        "version": settings.VERSION,
-        "docs_url": "/docs",
-        "health_url": "/api/health"
-    }
+
+# Mount Pre-built Frontend SPA (Single-Container Fullstack Deployment)
+FRONTEND_DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+
+if FRONTEND_DIST.exists() and (FRONTEND_DIST / "index.html").exists():
+    app.mount("/assets", StaticFiles(directory=str(FRONTEND_DIST / "assets")), name="static_assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        # Exclude /api routes and docs
+        if full_path.startswith("api/") or full_path.startswith("docs") or full_path.startswith("openapi.json"):
+            return None
+        target_file = FRONTEND_DIST / full_path
+        if target_file.is_file():
+            return FileResponse(target_file)
+        return FileResponse(FRONTEND_DIST / "index.html")
+else:
+    @app.get("/")
+    async def root():
+        return {
+            "project": settings.PROJECT_NAME,
+            "tagline": settings.TAGLINE,
+            "version": settings.VERSION,
+            "docs_url": "/docs",
+            "health_url": "/api/health"
+        }
 
 if __name__ == "__main__":
     import uvicorn

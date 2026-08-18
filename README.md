@@ -1,3 +1,13 @@
+---
+title: VocaRAG - Voice-Enabled Multilingual Indic RAG
+emoji: 🎙️
+colorFrom: green
+colorTo: emerald
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # VocaRAG — Voice-Enabled Multilingual Retrieval-Augmented Generation
 
 [![CI](https://github.com/ArnavSharma-IND/VocaRAG/actions/workflows/ci.yml/badge.svg)](https://github.com/ArnavSharma-IND/VocaRAG/actions/workflows/ci.yml)
