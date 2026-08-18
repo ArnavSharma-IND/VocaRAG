@@ -1,31 +1,15 @@
+import os
+import json
 import hashlib
 import logging
 import time
+from pathlib import Path
 from typing import List, Dict, Any, Optional
 from backend.config import settings
 from backend.models.schemas import ChunkInfo
 from backend.rag.chunking import ChunkingEngine, generate_chunk_id
 
 logger = logging.getLogger(__name__)
-
-# Language code to MSMARCO-XI HuggingFace config mapping
-LANG_TO_HF_CONFIG = {
-    "hi": "hi",
-    "te": "te",
-    "en": "en",
-    "bn": "bn",
-    "ta": "ta",
-    "kn": "kn",
-    "ml": "ml",
-    "mr": "mr",
-    "gu": "gu",
-    "pa": "pa",
-    "or": "or",
-    "ur": "ur",
-    "as": "as",
-    "ne": "ne",
-    "sa": "sa",
-}
 
 LANG_NAMES = {
     "hi": "Hindi",
@@ -45,17 +29,19 @@ LANG_NAMES = {
     "sa": "Sanskrit",
 }
 
+LOCAL_DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "msmarco"
+
 
 class MSMARCOLoader:
     """
-    Loads passages from ai4bharat/MSMARCO-XI into the VocaRAG ingestion pipeline.
+    Loads passages from bundled MSMARCO-XI dataset or HuggingFace Hub into the VocaRAG ingestion pipeline.
     Preserves exact passage-level metadata (passage_id, query_id, is_selected, language).
     """
 
     def __init__(self):
         self._loaded = False
         self._passage_docs: List[Dict[str, Any]] = []
-        self._gold_pairs: List[Dict[str, Any]] = []  # For IR eval (Recall@k, MRR)
+        self._gold_pairs: List[Dict[str, Any]] = []
 
     @property
     def is_loaded(self) -> bool:
@@ -69,19 +55,31 @@ class MSMARCOLoader:
     def passage_docs(self) -> List[Dict[str, Any]]:
         return self._passage_docs
 
+    def _load_from_local_jsonl(self, lang: str) -> List[Dict[str, Any]]:
+        """Loads bundled JSONL dataset directly from data/msmarco/{lang}.jsonl."""
+        jsonl_path = LOCAL_DATA_DIR / f"{lang}.jsonl"
+        if not jsonl_path.exists():
+            return []
+
+        rows = []
+        with open(jsonl_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        rows.append(json.loads(line))
+                    except json.JSONDecodeError:
+                        continue
+        return rows
+
     def load_msmarco_corpus(self) -> List[Dict[str, Any]]:
         """
-        Downloads and processes MSMARCO-XI passages for configured languages.
+        Loads MSMARCO-XI passages for configured languages.
+        First checks pre-bundled local data/msmarco/{lang}.jsonl for instant deterministic seeding.
         Preserves passage_id, query_id, is_selected for each individual passage.
         """
         if not settings.MSMARCO_ENABLED:
             logger.info("MSMARCO-XI ingestion is disabled.")
-            return []
-
-        try:
-            from datasets import load_dataset
-        except ImportError:
-            logger.error("'datasets' library not installed. Run: pip install datasets")
             return []
 
         all_passages = []
@@ -89,55 +87,54 @@ class MSMARCOLoader:
 
         for lang in settings.MSMARCO_LANGUAGES:
             lang = lang.strip()
-            if lang not in LANG_TO_HF_CONFIG:
-                logger.warning(f"Unknown MSMARCO-XI language: {lang}. Skipping.")
-                continue
-
             target_count = settings.MSMARCO_SLICE_SIZES.get(lang, 500)
             raw_count = int(target_count * settings.MSMARCO_RAW_OVERSAMPLE)
 
             logger.info(
                 f"Loading MSMARCO-XI [{lang}] ({LANG_NAMES.get(lang, lang)}): "
-                f"sampling {raw_count} raw rows -> target {target_count} clean passages"
+                f"target {target_count} clean passages"
             )
 
             t_start = time.perf_counter()
+            raw_rows = self._load_from_local_jsonl(lang)
 
-            try:
-                hf_config = LANG_TO_HF_CONFIG[lang]
-                if lang == "en":
-                    ds = load_dataset(
-                        "microsoft/ms_marco",
-                        "v1.1",
-                        split=f"train[:{raw_count}]",
-                        trust_remote_code=True,
-                    )
-                else:
-                    ds = load_dataset(
-                        "ai4bharat/MSMARCO-XI",
-                        hf_config,
-                        split=f"train[:{raw_count}]",
-                        trust_remote_code=True,
-                    )
-            except Exception as e:
-                logger.error(f"Failed to load MSMARCO-XI [{lang}]: {e}")
-                continue
+            if not raw_rows:
+                # Fallback to HuggingFace Hub if local jsonl is absent
+                try:
+                    from datasets import load_dataset
+                    if lang == "en":
+                        ds = load_dataset("microsoft/ms_marco", "v1.1", split=f"train[:{raw_count}]")
+                    else:
+                        ds = load_dataset("ai4bharat/MSMARCO-XI", "default", split=f"train[:{raw_count}]")
+                    raw_rows = list(ds)
+                except Exception as e:
+                    logger.warning(f"Could not load MSMARCO-XI [{lang}] from Hub: {e}")
+                    raw_rows = []
 
             load_time = round((time.perf_counter() - t_start) * 1000, 2)
-            logger.info(f"Downloaded {len(ds)} rows for [{lang}] in {load_time}ms")
+            logger.info(f"Loaded {len(raw_rows)} raw rows for [{lang}] in {load_time}ms")
 
             seen_hashes = set()
             lang_passages = []
 
-            for row_idx, row in enumerate(ds):
+            for row_idx, row in enumerate(raw_rows):
                 passages = row.get("passages", {})
                 if not passages:
                     continue
 
-                passage_texts = passages.get("passage_text", [])
-                is_selected_flags = passages.get("is_selected", [])
+                if isinstance(passages, list):
+                    # Direct list of passage dicts: [{"passage_text": "...", "is_selected": 1}]
+                    passage_texts = [p.get("passage_text", "") for p in passages]
+                    is_selected_flags = [p.get("is_selected", 0) for p in passages]
+                elif isinstance(passages, dict):
+                    # HF Dict format: {"passage_text": [...], "is_selected": [...]}
+                    passage_texts = passages.get("passage_text", [])
+                    is_selected_flags = passages.get("is_selected", [])
+                else:
+                    continue
+
                 query_text = row.get("query", "")
-                query_id = str(row.get("query_id", row_idx))
+                query_id = str(row.get("query_id", f"{lang}_q{row_idx}"))
 
                 for p_idx, p_text in enumerate(passage_texts):
                     if not p_text or not isinstance(p_text, str):
@@ -180,14 +177,8 @@ class MSMARCOLoader:
                             "language_name": LANG_NAMES.get(lang, lang),
                         })
 
-                    if len(lang_passages) >= target_count:
-                        break
-
-                if len(lang_passages) >= target_count:
-                    break
-
             logger.info(
-                f"MSMARCO-XI [{lang}]: extracted {len(lang_passages)} clean passages "
+                f"MSMARCO-XI [{lang}]: indexed {len(lang_passages)} clean passages "
                 f"({len([p for p in lang_passages if p['is_selected']])} gold-relevant)"
             )
             all_passages.extend(lang_passages)
@@ -207,12 +198,12 @@ class MSMARCOLoader:
         Preserves passage_id, query_id, is_selected in metadata without lossy document concatenation.
         """
         chunks: List[ChunkInfo] = []
-        
+
         for idx, p in enumerate(self._passage_docs):
             p_text = p["text"]
             doc_id = f"msmarco_{p['language']}"
             doc_name = f"msmarco_xi_{p['language']}.txt"
-            
+
             meta = {
                 "passage_id": p["passage_id"],
                 "query_id": p["query_id"],
@@ -225,7 +216,6 @@ class MSMARCOLoader:
                 "is_sample": True
             }
 
-            # If passage fits inside chunk_size, create 1 ChunkInfo directly
             if len(p_text) <= chunk_size:
                 c_id = generate_chunk_id(doc_id, idx, p_text)
                 chunks.append(ChunkInfo(
@@ -238,7 +228,6 @@ class MSMARCOLoader:
                     metadata={**meta, "strategy": "passage-direct"}
                 ))
             else:
-                # Sub-chunk only large passages, preserving passage-level metadata on each sub-chunk
                 sub_chunks = ChunkingEngine.chunk_recursive(
                     text=p_text,
                     doc_id=doc_id,
@@ -255,5 +244,4 @@ class MSMARCOLoader:
         return chunks
 
 
-# Singleton instance
 msmarco_loader = MSMARCOLoader()

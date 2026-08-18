@@ -75,6 +75,12 @@ app.include_router(benchmark.router)
 app.include_router(guardrails.router)
 app.include_router(system.router)
 
+@app.post("/api/predict")
+async def gradio_predict_probe():
+    """Healthcheck probe handler for Hugging Face Spaces Gradio supervisor."""
+    return {"data": ["VocaRAG is operational."]}
+
+
 @app.get("/api/debug/rag")
 async def debug_rag(collection: str = "msmarco"):
     stats = ingestion_manager.get_stats(collection)
