@@ -1,14 +1,3 @@
----
-title: VocaRAG - Voice Multilingual Indic RAG
-emoji: 🎙️
-colorFrom: green
-colorTo: emerald
-sdk: gradio
-sdk_version: 4.44.0
-app_file: app.py
-pinned: false
----
-
 # VocaRAG — Voice-Enabled Multilingual Retrieval-Augmented Generation
 
 [![CI](https://github.com/ArnavSharma-IND/VocaRAG/actions/workflows/ci.yml/badge.svg)](https://github.com/ArnavSharma-IND/VocaRAG/actions/workflows/ci.yml)
