@@ -161,6 +161,8 @@ export interface GuardrailCheckResponse {
   reason?: string | null;
   risk_level: 'LOW' | 'MEDIUM' | 'HIGH';
   recommended_action: 'ALLOW' | 'BLOCK' | 'ABSTAIN';
+  collection?: string;
+  evidence_confidence?: number | null;
   latency_ms?: number;
 }
 

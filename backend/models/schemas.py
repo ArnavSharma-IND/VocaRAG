@@ -157,6 +157,7 @@ class BenchmarkSummary(BaseModel):
 
 class GuardrailCheckRequest(BaseModel):
     query: str
+    collection: Optional[str] = "msmarco"
 
 class GuardrailCheckResponse(BaseModel):
     query: str
@@ -165,6 +166,9 @@ class GuardrailCheckResponse(BaseModel):
     reason: Optional[str] = None
     risk_level: str = "LOW"
     recommended_action: str = "ALLOW"
+    collection: str = "msmarco"
+    evidence_confidence: Optional[float] = None
+    latency_ms: float = 0.0
 
 class SystemStatus(BaseModel):
     voice_engine_status: str

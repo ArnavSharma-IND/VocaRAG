@@ -167,15 +167,17 @@ export const api = {
     return handleResponse<IREvalResult>(res);
   },
 
-  async checkGuardrails(query: string): Promise<GuardrailCheckResponse> {
+  async checkGuardrails(query: string, collection: string = 'msmarco'): Promise<GuardrailCheckResponse> {
     const t0 = performance.now();
     const res = await fetch(`${API_BASE_URL}/guardrails/check`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({ query, collection }),
     });
     const data = await handleResponse<GuardrailCheckResponse>(res);
-    data.latency_ms = Math.round(performance.now() - t0);
+    if (!data.latency_ms) {
+      data.latency_ms = Math.round(performance.now() - t0);
+    }
     return data;
   },
 
