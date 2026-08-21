@@ -100,7 +100,9 @@ async def debug_rag(collection: str = "msmarco"):
 FRONTEND_DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
 
 if FRONTEND_DIST.exists() and (FRONTEND_DIST / "index.html").exists():
-    app.mount("/assets", StaticFiles(directory=str(FRONTEND_DIST / "assets")), name="static_assets")
+    assets_dir = FRONTEND_DIST / "assets"
+    if assets_dir.is_dir():
+        app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="static_assets")
 
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
