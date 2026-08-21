@@ -1,14 +1,3 @@
----
-title: VocaRAG
-emoji: 🎙️
-colorFrom: green
-colorTo: green
-sdk: gradio
-sdk_version: 4.44.0
-app_file: app.py
-pinned: false
----
-
 # VocaRAG — Voice-Enabled Multilingual Retrieval-Augmented Generation
 
 [![CI](https://github.com/ArnavSharma-IND/VocaRAG/actions/workflows/ci.yml/badge.svg)](https://github.com/ArnavSharma-IND/VocaRAG/actions/workflows/ci.yml)
@@ -25,30 +14,32 @@ Developed for **Hackathon / HHGoa'26 — Task #2**.
 
 ---
 
-## 1. Architectural Highlights & Compliance
+## 1. System Overview & Core Capabilities
 
-1. **Server-Side Multilingual STT (Sarvam AI Saaras v3)**: 
-   Raw browser audio streams directly to Sarvam AI's REST endpoint supporting 23 Indian languages (`hi-IN`, `te-IN`, `bn-IN`, `ta-IN`, `en-IN`, etc.) with mode switching (`transcribe`, `translate`, `codemix`).
-2. **AI4Bharat MSMARCO-XI Corpus**:
-   Native ingestion and retrieval over `ai4bharat/MSMARCO-XI` (14 Indic languages) preserving gold relevance tags (`is_selected`) for formal Information Retrieval evaluation (Recall@k, MRR).
-3. **Dual Knowledge Collection Architecture**:
-   - **Indic MSMARCO-XI (Graded)**: Multilingual passage search and Q&A across Hindi, Telugu, and English.
-   - **Enterprise Policies (Demo)**: Comprehensive corporate handbook, travel, security, and hardware documentation.
-4. **Multilingual Dense Embeddings**:
+VocaRAG is an enterprise-grade, voice-first Retrieval-Augmented Generation (RAG) system engineered for high-accuracy multilingual question answering across Indian languages (Hindi, Telugu, English).
+
+1. **Voice-to-Voice & Audio-First Pipeline**:
+   - **Sarvam AI Saaras v3 STT**: Real-time Indic speech-to-text with auto-punctuation, acoustic noise robustness, and native language/script support.
+   - **Sarvam Bulbul TTS**: Natural voice answer synthesis for full round-trip voice interaction.
+   - **Cross-Lingual STT (`mode="translate"`)**: Direct speech-to-English translation path for seamless cross-lingual querying.
+2. **Dual Vector Collections**:
+   - **MS MARCO / Indic-XI**: Multilingual IR evaluation dataset with human-verified gold relevance labels.
+   - **Enterprise Policies**: Corporate handbook, travel, security, and hardware documentation.
+3. **Multilingual Dense Embeddings**:
    `sentence-transformers/paraphrase-multilingual-mpnet-base-v2` (768-dimensional dense vector space) ensuring cross-lingual semantic alignment.
-5. **Four Chunking Strategies**:
-   - **Recursive Hierarchical**: Paragraph $\to$ line $\to$ sentence $\to$ word boundary descent.
+4. **Four Chunking Strategies**:
+   - **Recursive Hierarchical**: Paragraph → line → sentence → word boundary descent.
    - **Semantic Boundary**: Embedding-cosine inflection point splitting.
    - **Sentence Grouping**: Overlapping sentence windows.
    - **Fixed-Size**: Word-boundary snapped token windows.
-6. **Sub-250ms Groq LPU Fast-Path + Multi-Tier Fallbacks**:
+5. **Sub-250ms Groq LPU Fast-Path + Multi-Tier Fallbacks**:
    Instant low-latency generation via Groq `llama-3.3-70b-versatile`, with seamless fallback to Gemini 1.5 Flash, OpenAI GPT-4o-mini, or deterministic zero-API local synthesis.
-7. **Two-Sided Guardrails & Hallucination Prevention**:
+6. **Two-Sided Guardrails & Hallucination Prevention**:
    - Pre-retrieval Prompt Injection & Jailbreak regex/pattern shields (English & transliterated Indic).
-   - Post-retrieval Evidence Confidence Thresholding ($<30\%$ similarity triggers explicit abstention).
+   - Post-retrieval Evidence Confidence Thresholding (<30% similarity triggers explicit abstention).
    - Post-generation Groundedness token-overlap verification against cited chunks.
-8. **Real Stage Latency Telemetry & P50/P70/P100 Benchmarking**:
-   Clear split between **Retrieval Pipeline** ($<200\text{ms}$ SLA) and **End-to-End Generation**.
+7. **Real Stage Latency Telemetry & P50/P70/P100 Benchmarking**:
+   Clear split between **Retrieval Pipeline** (<200ms SLA) and **End-to-End Generation**.
 
 ---
 
@@ -64,18 +55,20 @@ Developed for **Hackathon / HHGoa'26 — Task #2**.
 │   │   └── schemas.py           # Pydantic schemas with telemetry & collection routing
 │   ├── rag/
 │   │   ├── stt.py               # Sarvam AI Saaras v3 STT client with exponential retry
-│   │   ├── msmarco_loader.py    # AI4Bharat MSMARCO-XI dataset loader & IR eval tracker
+│   │   ├── tts.py               # Sarvam Bulbul TTS voice synthesis engine
+│   │   ├── msmarco_loader.py    # MS MARCO / Indic-XI dataset loader & IR eval tracker
 │   │   ├── chunking.py          # Fixed, Sentence, Recursive, and Semantic chunkers
 │   │   ├── embeddings.py        # 768-dim Multilingual MPNet SentenceTransformer + MD5 cache
 │   │   ├── retriever.py         # Dual FAISS IndexFlatIP vector stores (Enterprise + MSMARCO)
 │   │   ├── ingestion.py         # Multi-format parser (PDF, TXT, DOCX) & collection indexer
-│   │   ├── generator.py         # Groq LPU, Gemini, OpenAI & local deterministic grounded synthesizers
+│   │   ├── generator.py         # Groq LPU, Gemini, OpenAI & local deterministic synthesizers
 │   │   ├── guardrails.py        # Injection detector, evidence abstention & post-gen groundedness
 │   │   ├── pipeline.py          # Staged voice-to-answer RAG orchestrator with timestamping
 │   │   └── benchmark.py         # 16-query evaluation suite & empirical percentile calculator
 │   └── routes/
 │       ├── ask.py               # POST /api/ask (voice/text -> grounded answer)
 │       ├── stt.py               # POST /api/stt/transcribe (Sarvam audio upload)
+│       ├── tts.py               # POST /api/tts/synthesize (Sarvam Bulbul TTS)
 │       ├── ingestion.py         # POST /api/ingest, POST /api/reindex, GET /api/documents
 │       ├── retrieval.py         # POST /api/retrieval/search (Isolated FAISS sandbox)
 │       ├── benchmark.py         # POST /api/benchmark/run, GET /api/benchmark/latest
@@ -89,18 +82,21 @@ Developed for **Hackathon / HHGoa'26 — Task #2**.
 │   │   ├── components/
 │   │   │   ├── VoiceHero.tsx    # Mic, Sarvam language picker & collection switcher
 │   │   │   ├── PipelineVisualizer.tsx # Animated stage execution graph
-│   │   │   ├── AnswerCard.tsx   # Grounded response, confidence & citations
-│   │   │   ├── SourceDrawer.tsx # Slide-out chunk context inspector
+│   │   │   ├── AnswerCard.tsx   # Grounded response, confidence, TTS audio & gold citations
+│   │   │   ├── SourceDrawer.tsx # Slide-out chunk context inspector with gold badges
 │   │   │   └── LatencyBreakdown.tsx # Telemetry metrics
 │   │   └── pages/
 │   │       ├── AskPage.tsx
 │   │       ├── KnowledgeBasePage.tsx # Chunking studio & collection manager
 │   │       ├── RetrievalLabPage.tsx  # Vector search playground
-│   │       └── BenchmarkLabPage.tsx  # Dual percentile latency charts
+│   │       ├── GuardrailsPage.tsx    # Live adversarial injection sandbox
+│   │       └── BenchmarkLabPage.tsx  # Dual percentile latency & IR accuracy charts
+├── data/
+│   └── msmarco/                 # Pre-bundled MS MARCO multilingual dataset slices
 ├── tests/
 │   ├── conftest.py              # Pytest fixture initializing vector store
 │   ├── test_rag_pipeline.py     # Groundedness, abstention, injection & semantic tests
-│   └── test_api_endpoints.py    # Async HTTP tests for all FastAPI routes
+│   └── test_api_endpoints.py    # Async HTTP tests for all 31 FastAPI test cases
 ├── .github/workflows/
 │   └── ci.yml                   # Automated Pytest + Vite build CI pipeline
 ├── Dockerfile                   # Multi-stage production container build
@@ -166,10 +162,12 @@ cd frontend && npm run build
 
 - `POST /api/ask`: Core RAG query with collection selection and microsecond telemetry.
 - `POST /api/stt/transcribe`: Audio upload to Sarvam AI Saaras v3 STT.
+- `POST /api/tts/synthesize`: Voice synthesis via Sarvam AI Bulbul TTS.
 - `POST /api/ingest`: Multipart file upload (PDF/TXT/DOCX/MD) to specified collection.
 - `POST /api/reindex`: Reindexes collection with requested chunking strategy (Recursive, Semantic, Sentence, Fixed).
 - `POST /api/retrieval/search`: Vector search sandbox with Top-K & threshold controls.
-- `POST /api/benchmark/run`: Executes 16-query evaluation suite computing P50/P70/P100 percentiles.
+- `POST /api/benchmark/run`: Executes 16-query evaluation suite computing P50/P70/P100 percentiles & IR metrics.
+- `POST /api/guardrails/check`: Real-time adversarial injection and out-of-scope validation.
 - `GET /api/system`: Health, models, and active vector store statistics.
 
 ---
