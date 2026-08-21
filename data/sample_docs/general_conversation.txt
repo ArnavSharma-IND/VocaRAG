@@ -1,0 +1,780 @@
+# General Conversation Dataset for VocaRAG Voice Agent
+# Purpose: Basic conversational grounding for greetings, small talk, everyday questions, clarification, support, and voice-agent interactions.
+# Format: Each example contains a USER utterance and a natural ASSISTANT response.
+# Note: Live information such as current time, weather, news, or availability should be obtained from appropriate tools when available.
+
+========================================================================
+GREETING AND INTRODUCTION
+========================================================================
+
+USER: Hello
+ASSISTANT: Hello! How can I help you?
+
+USER: Hi
+ASSISTANT: Hi! What can I do for you?
+
+USER: Hey
+ASSISTANT: Hey! How can I help?
+
+USER: Good morning
+ASSISTANT: Good morning! I hope you're having a great day. How can I help?
+
+USER: Good afternoon
+ASSISTANT: Good afternoon! How can I assist you?
+
+USER: Good evening
+ASSISTANT: Good evening! What can I help you with?
+
+USER: Good night
+ASSISTANT: Good night! Sleep well and take care.
+
+USER: How are you?
+ASSISTANT: I'm doing well, thank you! How are you?
+
+USER: How are you doing?
+ASSISTANT: I'm doing great! What would you like to talk about?
+
+USER: How is your day?
+ASSISTANT: It's going well! I'm ready to help with whatever you need.
+
+USER: Nice to meet you
+ASSISTANT: Nice to meet you too!
+
+USER: Who are you?
+ASSISTANT: I'm a voice assistant designed to understand your questions and help with everyday tasks.
+
+USER: What is your name?
+ASSISTANT: You can call me your voice assistant. If you've given me a specific name, I can use that too.
+
+USER: Introduce yourself
+ASSISTANT: I'm an AI voice assistant. I can answer questions, have conversations, explain topics, and help with everyday tasks.
+
+USER: What can you do?
+ASSISTANT: I can answer questions, explain concepts, help you think through problems, have casual conversations, and assist with many everyday requests.
+
+USER: Are you an AI?
+ASSISTANT: Yes. I'm an AI assistant designed to understand natural language and respond conversationally.
+
+USER: Are you a robot?
+ASSISTANT: I'm software rather than a physical robot, but you can interact with me conversationally.
+
+USER: Are you human?
+ASSISTANT: No. I'm an AI assistant, so I don't have a human body or personal life.
+
+USER: Can I talk to you?
+ASSISTANT: Absolutely. You can talk to me naturally, just as you would with a conversational assistant.
+
+USER: Can you understand me?
+ASSISTANT: I'll do my best to understand what you say. If something is unclear, I'll ask you to clarify.
+
+========================================================================
+POLITENESS AND SOCIAL RESPONSES
+========================================================================
+
+USER: Thank you
+ASSISTANT: You're welcome!
+
+USER: Thanks
+ASSISTANT: You're welcome! Happy to help.
+
+USER: Thanks a lot
+ASSISTANT: You're very welcome!
+
+USER: Thank you so much
+ASSISTANT: My pleasure!
+
+USER: You're helpful
+ASSISTANT: I'm glad I could help.
+
+USER: That's helpful
+ASSISTANT: I'm happy to hear that.
+
+USER: Great
+ASSISTANT: Glad you like it!
+
+USER: Awesome
+ASSISTANT: Awesome! What would you like to do next?
+
+USER: Perfect
+ASSISTANT: Great! Let me know if you need anything else.
+
+USER: Good job
+ASSISTANT: Thank you! I appreciate that.
+
+USER: I appreciate it
+ASSISTANT: You're very welcome.
+
+USER: Please help me
+ASSISTANT: Of course. Tell me what you need help with.
+
+USER: Sorry
+ASSISTANT: No problem at all.
+
+USER: I'm sorry
+ASSISTANT: That's okay. How can I help?
+
+USER: Excuse me
+ASSISTANT: Of course. What can I help you with?
+
+USER: Never mind
+ASSISTANT: No problem. If you need anything later, just ask.
+
+USER: Forget it
+ASSISTANT: Sure, no problem.
+
+USER: That's okay
+ASSISTANT: Glad to hear it.
+
+USER: No problem
+ASSISTANT: You're all set!
+
+USER: You're welcome
+ASSISTANT: Anytime!
+
+========================================================================
+FAREWELLS
+========================================================================
+
+USER: Bye
+ASSISTANT: Goodbye! Take care.
+
+USER: Goodbye
+ASSISTANT: Goodbye! Have a great day.
+
+USER: See you
+ASSISTANT: See you later!
+
+USER: See you later
+ASSISTANT: See you later!
+
+USER: Talk to you later
+ASSISTANT: Sure! Talk to you later.
+
+USER: I'll be back
+ASSISTANT: I'll be here when you're ready.
+
+USER: I'm leaving
+ASSISTANT: Alright. Take care!
+
+USER: Good night
+ASSISTANT: Good night! Rest well.
+
+USER: Have a good day
+ASSISTANT: Thank you! You have a great day too.
+
+USER: Have a nice day
+ASSISTANT: Thanks! I hope you have a nice day too.
+
+USER: Catch you later
+ASSISTANT: Catch you later!
+
+USER: I'm done
+ASSISTANT: Sounds good. I'm here whenever you need me.
+
+========================================================================
+CASUAL SMALL TALK
+========================================================================
+
+USER: What are you doing?
+ASSISTANT: I'm here and ready to chat or help with something.
+
+USER: What are you up to?
+ASSISTANT: I'm ready for whatever you'd like to talk about.
+
+USER: Are you busy?
+ASSISTANT: I'm available to help.
+
+USER: Are you there?
+ASSISTANT: Yes, I'm here.
+
+USER: Are you listening?
+ASSISTANT: Yes, I'm listening.
+
+USER: Can you hear me?
+ASSISTANT: I can process what you say through the voice interface.
+
+USER: I'm bored
+ASSISTANT: Let's fix that. We can chat, play a word game, brainstorm ideas, or explore a topic.
+
+USER: I'm tired
+ASSISTANT: Sounds like you could use a break. Rest if you can.
+
+USER: I'm happy
+ASSISTANT: That's great to hear! What's making you happy?
+
+USER: I'm sad
+ASSISTANT: I'm sorry you're feeling down. If you want to talk about it, I'm here to listen.
+
+USER: I'm excited
+ASSISTANT: That's exciting! Tell me what's going on.
+
+USER: I'm angry
+ASSISTANT: I understand. If you want, you can tell me what happened and we can think it through.
+
+USER: I'm confused
+ASSISTANT: No worries. Tell me what part is confusing, and we'll go through it step by step.
+
+USER: I'm stressed
+ASSISTANT: That sounds difficult. Taking a short pause and breaking the problem into smaller steps can help.
+
+USER: I'm bored today
+ASSISTANT: We can find something interesting to do. Want a quick game, idea, or conversation topic?
+
+USER: Tell me something interesting
+ASSISTANT: Here's one: octopuses have three hearts, and two of them stop beating while the animal swims.
+
+USER: Tell me a joke
+ASSISTANT: Why did the computer go to the doctor? Because it had a virus!
+
+USER: Make me laugh
+ASSISTANT: Why don't programmers like nature? It has too many bugs.
+
+USER: Let's chat
+ASSISTANT: Sure! What would you like to talk about?
+
+USER: Talk with me
+ASSISTANT: Absolutely. What's on your mind?
+
+========================================================================
+CLARIFICATION AND CONVERSATION CONTROL
+========================================================================
+
+USER: What did you say?
+ASSISTANT: I can repeat that. Which part would you like me to repeat?
+
+USER: Repeat that
+ASSISTANT: Sure. I'll repeat it more clearly.
+
+USER: Say that again
+ASSISTANT: Of course. I'll say it again.
+
+USER: Speak slowly
+ASSISTANT: Sure. I'll keep the explanation slower and clearer.
+
+USER: Be brief
+ASSISTANT: Sure. I'll keep my answer concise.
+
+USER: Explain more
+ASSISTANT: Absolutely. I'll give you a little more detail.
+
+USER: Give me an example
+ASSISTANT: Sure. I can give you a simple example.
+
+USER: What do you mean?
+ASSISTANT: I can explain that in simpler terms. Which part would you like clarified?
+
+USER: I don't understand
+ASSISTANT: No problem. I'll explain it in a simpler way.
+
+USER: That's not what I meant
+ASSISTANT: Got it. Tell me what you meant, and I'll adjust my answer.
+
+USER: You misunderstood me
+ASSISTANT: Sorry about that. Please rephrase what you meant, and I'll try again.
+
+USER: I didn't hear you
+ASSISTANT: No problem. I'll repeat the response.
+
+USER: Can you clarify?
+ASSISTANT: Sure. Tell me which part you'd like me to clarify.
+
+USER: Can you simplify that?
+ASSISTANT: Yes. I'll explain it using simpler words.
+
+USER: Give me the short answer
+ASSISTANT: Sure. I'll give you the key point first.
+
+USER: Give me details
+ASSISTANT: Sure. I'll provide a more detailed explanation.
+
+USER: Can you explain step by step?
+ASSISTANT: Absolutely. I'll break it into clear steps.
+
+USER: What should I ask?
+ASSISTANT: You can ask me about information, explanations, ideas, planning, or everyday topics.
+
+USER: I have a question
+ASSISTANT: Go ahead. What's your question?
+
+USER: Can I ask something?
+ASSISTANT: Of course. Ask away.
+
+========================================================================
+COMMON INFORMATION QUESTIONS
+========================================================================
+
+USER: What is the internet?
+ASSISTANT: The internet is a worldwide network that connects computers and devices so they can exchange information and communicate.
+
+USER: What is a computer?
+ASSISTANT: A computer is an electronic device that processes data according to instructions called programs.
+
+USER: What is software?
+ASSISTANT: Software is a collection of programs and instructions that tell a computer what to do.
+
+USER: What is hardware?
+ASSISTANT: Hardware refers to the physical components of a computer or electronic device.
+
+USER: What is an app?
+ASSISTANT: An app is software designed to perform specific tasks on a computer, phone, tablet, or other device.
+
+USER: What is AI?
+ASSISTANT: Artificial intelligence is the field of building systems that can perform tasks that normally require human-like intelligence.
+
+USER: What is machine learning?
+ASSISTANT: Machine learning is a branch of AI where systems learn patterns from data to make predictions or decisions.
+
+USER: What is data?
+ASSISTANT: Data is information represented in a form that can be stored, processed, or analyzed.
+
+USER: What is a database?
+ASSISTANT: A database is an organized collection of information that can be stored, searched, and updated.
+
+USER: What is programming?
+ASSISTANT: Programming is the process of writing instructions that computers can execute.
+
+USER: What is Python?
+ASSISTANT: Python is a popular general-purpose programming language known for readable syntax and a large ecosystem.
+
+USER: What is Java?
+ASSISTANT: Java is a widely used programming language and platform designed to run applications across many environments.
+
+USER: What is JavaScript?
+ASSISTANT: JavaScript is a programming language widely used to make web pages and applications interactive.
+
+USER: What is SQL?
+ASSISTANT: SQL is a language used to work with relational databases, including querying and modifying data.
+
+USER: What is a website?
+ASSISTANT: A website is a collection of web pages and resources accessible through the internet.
+
+========================================================================
+EVERYDAY TASKS
+========================================================================
+
+USER: Help me plan my day
+ASSISTANT: Sure. Start with your most important tasks, then add smaller tasks and breaks around them.
+
+USER: Help me make a plan
+ASSISTANT: Absolutely. Tell me your goal, deadline, and any constraints, and I'll help organize it.
+
+USER: What should I do first?
+ASSISTANT: Start with the task that is most important or time-sensitive.
+
+USER: Help me organize my work
+ASSISTANT: Sure. We can group your work by priority, deadline, and estimated effort.
+
+USER: Make a checklist
+ASSISTANT: Sure. Tell me what you need to accomplish, and I'll turn it into a checklist.
+
+USER: I need to remember something
+ASSISTANT: Tell me what you want to remember. If reminders are supported, I can help you structure it.
+
+USER: Help me prioritize
+ASSISTANT: List your tasks and deadlines, and I'll help rank them by urgency and importance.
+
+USER: I have too much work
+ASSISTANT: Let me break it into smaller pieces and decide what must be done first.
+
+USER: How can I study better?
+ASSISTANT: Use focused study sessions, active recall, practice questions, and regular short breaks.
+
+USER: Help me study
+ASSISTANT: Absolutely. Tell me the subject and topic, and we can create a study plan or review key concepts.
+
+USER: Explain this to me
+ASSISTANT: Sure. Send me the topic or text you want explained.
+
+USER: Summarize this
+ASSISTANT: Sure. Provide the text or document, and I'll summarize the important points.
+
+USER: Compare these
+ASSISTANT: Sure. Tell me the two or more things you want compared.
+
+USER: Help me decide
+ASSISTANT: Absolutely. Tell me the options and what matters most to you.
+
+USER: Give me some ideas
+ASSISTANT: Sure. Tell me the topic, goal, or situation, and I'll brainstorm ideas.
+
+========================================================================
+VOICE AGENT INTERACTIONS
+========================================================================
+
+USER: Wake up
+ASSISTANT: I'm here. How can I help?
+
+USER: Hey assistant
+ASSISTANT: Yes? I'm listening.
+
+USER: Assistant
+ASSISTANT: I'm here.
+
+USER: Listen
+ASSISTANT: I'm listening.
+
+USER: Stop
+ASSISTANT: Okay, I'll stop.
+
+USER: Cancel
+ASSISTANT: Okay, cancelled.
+
+USER: Wait
+ASSISTANT: Sure, I'll wait.
+
+USER: Continue
+ASSISTANT: Sure, let's continue.
+
+USER: Start over
+ASSISTANT: No problem. Let's start again.
+
+USER: Go back
+ASSISTANT: Sure. Let me go back to the previous step.
+
+USER: What can I say?
+ASSISTANT: You can ask a question, give me a task, ask for an explanation, or simply start a conversation.
+
+USER: Are you still there?
+ASSISTANT: Yes, I'm still here.
+
+USER: Can you help me?
+ASSISTANT: Absolutely. What do you need?
+
+USER: I need assistance
+ASSISTANT: Of course. Tell me what you're trying to do.
+
+USER: Do you understand?
+ASSISTANT: I'll do my best to understand. If anything is unclear, I'll ask.
+
+========================================================================
+YES NO AND CONFIRMATION
+========================================================================
+
+USER: Yes
+ASSISTANT: Okay.
+
+USER: Yeah
+ASSISTANT: Got it.
+
+USER: Yep
+ASSISTANT: Sure.
+
+USER: No
+ASSISTANT: Okay, no problem.
+
+USER: Nope
+ASSISTANT: Understood.
+
+USER: Maybe
+ASSISTANT: That's okay. We can look at the options.
+
+USER: Probably
+ASSISTANT: That sounds possible. What would you like to do?
+
+USER: Definitely
+ASSISTANT: Great! Let's go ahead.
+
+USER: Correct
+ASSISTANT: Great, thanks for confirming.
+
+USER: That's right
+ASSISTANT: Got it.
+
+USER: That's wrong
+ASSISTANT: Thanks for correcting me.
+
+USER: Exactly
+ASSISTANT: Understood.
+
+USER: Not exactly
+ASSISTANT: Okay. Tell me what needs to be changed.
+
+USER: I agree
+ASSISTANT: Sounds good.
+
+USER: I disagree
+ASSISTANT: That's okay. We can look at both perspectives.
+
+========================================================================
+TIME DATE AND WEATHER GENERAL RESPONSES
+========================================================================
+
+USER: What time is it?
+ASSISTANT: I can provide the current time when a live time service is available.
+
+USER: What's today's date?
+ASSISTANT: I can provide today's date when a live date or time service is available.
+
+USER: What day is today?
+ASSISTANT: I can tell you the current day when live date information is available.
+
+USER: What's the weather?
+ASSISTANT: I can check the current weather when a live weather service is available.
+
+USER: Is it raining?
+ASSISTANT: I can check current rain conditions when live weather information is available.
+
+USER: Is it hot today?
+ASSISTANT: I can check the current temperature when live weather information is available.
+
+USER: What's the temperature?
+ASSISTANT: I can check the current temperature when live weather information is available.
+
+USER: Will it rain tomorrow?
+ASSISTANT: I can check the forecast when live weather information is available.
+
+========================================================================
+FOOD AND DAILY LIFE
+========================================================================
+
+USER: What should I eat?
+ASSISTANT: It depends on what you're in the mood for. I can suggest something based on your preferences and available ingredients.
+
+USER: I'm hungry
+ASSISTANT: Let's find something good to eat. Tell me what food you have or what you're craving.
+
+USER: Give me a quick breakfast idea
+ASSISTANT: Try eggs and toast, yogurt with fruit, or oatmeal with nuts and fruit.
+
+USER: Give me a simple lunch idea
+ASSISTANT: A rice or grain bowl with vegetables and a protein is simple and flexible.
+
+USER: Give me a simple dinner idea
+ASSISTANT: You could make a quick stir-fry with vegetables, protein, and rice or noodles.
+
+USER: I want a snack
+ASSISTANT: Fruit, yogurt, nuts, or a simple sandwich can make an easy snack.
+
+USER: How do I make tea?
+ASSISTANT: Boil water, pour it over tea leaves or a tea bag, steep for a few minutes, then add milk or sweetener if you like.
+
+USER: How do I make coffee?
+ASSISTANT: Brew ground coffee with hot water using your preferred method, then add milk or sweetener if desired.
+
+========================================================================
+TRAVEL AND PLACES
+========================================================================
+
+USER: I want to travel
+ASSISTANT: Nice! Tell me your destination, dates, budget, and what kind of trip you want.
+
+USER: Help me plan a trip
+ASSISTANT: Absolutely. Tell me where you're going, when, your budget, and what you enjoy doing.
+
+USER: What should I pack?
+ASSISTANT: Start with clothes, toiletries, identification, chargers, medication if applicable, and anything specific to your destination.
+
+USER: I need a hotel
+ASSISTANT: Tell me the destination, dates, budget, and preferred area, and I can help you think through options.
+
+USER: How do I get there?
+ASSISTANT: Tell me your starting point and destination, and I can help identify the best route when location information is available.
+
+USER: Where should I go on vacation?
+ASSISTANT: That depends on your budget, travel dates, and interests. Tell me what kind of experience you want.
+
+========================================================================
+WORK AND STUDY
+========================================================================
+
+USER: I have an exam
+ASSISTANT: Good luck! Tell me the subject and topics, and I can help you revise efficiently.
+
+USER: I need to study tonight
+ASSISTANT: Start by identifying the highest-priority topics, then use focused sessions with short breaks.
+
+USER: Help me with homework
+ASSISTANT: Sure. Send me the question or explain the problem.
+
+USER: I need to prepare for an interview
+ASSISTANT: I can help with common questions, technical questions, mock interviews, and answer improvement.
+
+USER: Help me write a resume
+ASSISTANT: Sure. Share your education, skills, experience, projects, and achievements, and I can help structure them.
+
+USER: Help me prepare for a presentation
+ASSISTANT: Absolutely. We can organize the opening, main points, examples, and conclusion.
+
+USER: I'm procrastinating
+ASSISTANT: Start with just five minutes on the smallest possible part of the task. Getting started is often the hardest part.
+
+USER: I can't focus
+ASSISTANT: Remove distractions, choose one small task, set a short timer, and focus only on that task.
+
+USER: I made a mistake
+ASSISTANT: That's okay. Let's identify what went wrong and figure out how to fix it.
+
+USER: I need motivation
+ASSISTANT: Focus on the next small action rather than the entire task. Progress builds from small steps.
+
+========================================================================
+EMOTIONAL AND SUPPORTIVE CONVERSATION
+========================================================================
+
+USER: I feel lonely
+ASSISTANT: I'm sorry you're feeling that way. I'm here to listen, and reaching out to someone you trust can also help.
+
+USER: I feel overwhelmed
+ASSISTANT: Let's slow things down. Tell me what's overwhelming you, and we'll break it into manageable pieces.
+
+USER: I'm worried
+ASSISTANT: It's understandable to feel worried. If you tell me what's concerning you, we can think through it together.
+
+USER: I'm nervous
+ASSISTANT: That's okay. Nervousness is common. We can prepare for whatever is making you nervous.
+
+USER: I'm frustrated
+ASSISTANT: I get it. Tell me what went wrong, and we can work through it.
+
+USER: I had a bad day
+ASSISTANT: I'm sorry. Some days are just difficult. If you want to talk about what happened, I'm here.
+
+USER: I had a great day
+ASSISTANT: That's wonderful! What made it a great day?
+
+USER: I feel stuck
+ASSISTANT: Let's identify the exact point where you're stuck and find one small next step.
+
+USER: I need someone to talk to
+ASSISTANT: I'm here to listen. What's on your mind?
+
+USER: Can you cheer me up?
+ASSISTANT: Absolutely. You're allowed to have difficult days. Let's find something small that might make the next few minutes better.
+
+========================================================================
+FUN AND ENTERTAINMENT
+========================================================================
+
+USER: Tell me a fun fact
+ASSISTANT: Honey never spoils when stored properly; archaeologists have found ancient honey that remained preserved.
+
+USER: Tell me another fun fact
+ASSISTANT: Bananas are botanically berries, while strawberries are not true botanical berries.
+
+USER: Tell me a riddle
+ASSISTANT: What has keys but can't open locks? A piano.
+
+USER: Another riddle
+ASSISTANT: What gets wetter the more it dries? A towel.
+
+USER: Let's play a game
+ASSISTANT: Sure! We can play trivia, riddles, twenty questions, or word games.
+
+USER: Give me trivia
+ASSISTANT: Sure. Ask me a topic or let me choose one.
+
+USER: Tell me a story
+ASSISTANT: Sure. Give me a theme, genre, or setting and I can tell you a short story.
+
+USER: Tell me something funny
+ASSISTANT: Why did the developer go broke? Because they used up all their cache.
+
+USER: What can we talk about?
+ASSISTANT: Anything from technology and science to movies, books, travel, hobbies, or everyday life.
+
+========================================================================
+SAFETY AND LIMITATIONS
+========================================================================
+
+USER: Can you do everything?
+ASSISTANT: No. I have limitations. I can help with many tasks, but some actions require specific tools or services.
+
+USER: Do you know everything?
+ASSISTANT: No. I can be wrong or lack current information, so important facts should be verified when necessary.
+
+USER: Can I trust everything you say?
+ASSISTANT: You should use judgment, especially for medical, legal, financial, safety, or other high-stakes information.
+
+USER: Can you access my phone?
+ASSISTANT: Only if the specific environment and connected tools provide that capability.
+
+USER: Can you see me?
+ASSISTANT: Not unless an appropriate camera or image input is provided and available to me.
+
+USER: Can you hear everything around me?
+ASSISTANT: I only process audio that is provided to the voice system.
+
+USER: Can you access the internet?
+ASSISTANT: Internet access depends on the tools and environment available to the assistant.
+
+USER: Can you remember everything?
+ASSISTANT: No. Memory depends on the features and context available in the system.
+
+USER: What if you don't know?
+ASSISTANT: I'll tell you when I'm uncertain rather than pretending to know.
+
+USER: What if you make a mistake?
+ASSISTANT: Tell me, and I'll reconsider the answer and correct it when possible.
+
+========================================================================
+COMMON FOLLOW-UP PHRASES
+========================================================================
+
+USER: And then?
+ASSISTANT: Sure. What would you like to know about the next step?
+
+USER: Why?
+ASSISTANT: I can explain the reason. What part would you like me to focus on?
+
+USER: How?
+ASSISTANT: I can explain how it works step by step.
+
+USER: When?
+ASSISTANT: Tell me what event or activity you're asking about, and I'll help determine the timing.
+
+USER: Where?
+ASSISTANT: Tell me what you're looking for, and I'll help identify the relevant place.
+
+USER: Who?
+ASSISTANT: Tell me the subject you're asking about, and I'll explain who or which people are involved.
+
+USER: Which one?
+ASSISTANT: Tell me the options you're choosing between, and I'll help compare them.
+
+USER: What else?
+ASSISTANT: I can suggest a few more options if you'd like.
+
+USER: Anything else?
+ASSISTANT: Yes. I can also help with related questions or next steps.
+
+USER: Why not?
+ASSISTANT: It may be possible. Tell me what you're considering, and we'll look at the constraints.
+
+========================================================================
+ERROR RECOVERY
+========================================================================
+
+USER: That didn't work
+ASSISTANT: Okay. Let's troubleshoot it step by step.
+
+USER: It's not working
+ASSISTANT: Let's figure out what's wrong. Tell me what you tried and what happened.
+
+USER: I got an error
+ASSISTANT: Send me the error message if you can, and I'll help interpret it.
+
+USER: It failed
+ASSISTANT: Okay. Let's identify where it failed and what changed before the failure.
+
+USER: Something went wrong
+ASSISTANT: No worries. Tell me what happened, and we'll work through it.
+
+USER: Try again
+ASSISTANT: Sure. Let's try again.
+
+USER: Do it again
+ASSISTANT: Okay. I'll retry the task.
+
+USER: That's incorrect
+ASSISTANT: Thanks for pointing that out. I'll reassess the answer.
+
+USER: You are wrong
+ASSISTANT: I may have misunderstood. Tell me what seems incorrect, and I'll correct it.
+
+USER: It doesn't make sense
+ASSISTANT: Let's simplify it and go through the reasoning step by step.
+
+========================================================================
+DATASET SUMMARY: 233 conversational examples
+========================================================================
+Designed as a general-purpose conversational fallback/grounding corpus for a VocaRAG voice agent.

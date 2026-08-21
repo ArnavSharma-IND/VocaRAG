@@ -85,11 +85,15 @@ class IngestionManager:
         self.raw_texts_by_coll[collection][doc_id] = raw_text
 
         is_msmarco = name.lower().startswith("msmarco") or collection == "msmarco"
+        is_convo = name.lower().startswith("general_conversation")
         is_gk = name.lower().startswith("general_knowledge")
         
         if is_msmarco:
             source_type = "msmarco_xi"
             category_badge = "MSMARCO"
+        elif is_convo:
+            source_type = "general_conversation"
+            category_badge = "CONVERSATION"
         elif is_gk:
             source_type = "general_knowledge"
             category_badge = "GENERAL"
