@@ -1,0 +1,12 @@
+backend/
+data/
+venv/
+.pytest_cache/
+__pycache__/
+app.py
+requirements.txt
+Dockerfile
+docker-compose.yml
+pytest.ini
+test_*.py
+tests/
