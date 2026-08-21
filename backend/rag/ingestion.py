@@ -184,21 +184,26 @@ class IngestionManager:
                 msmarco_loader.load_msmarco_corpus()
             all_chunks = msmarco_loader.get_passage_chunks(chunk_size, chunk_overlap)
 
-            # Include general conversation grounding dataset in msmarco collection
-            convo_path = settings.SAMPLE_DOCS_DIR / "general_conversation.txt"
-            if convo_path.exists():
+            # Include all general conversation grounding datasets (English, Hindi, Bengali, Kannada) in msmarco collection
+            for convo_file in sorted(list(settings.SAMPLE_DOCS_DIR.glob("general_conversation*.txt")), key=lambda p: p.name):
                 try:
-                    with open(convo_path, "r", encoding="utf-8", errors="ignore") as f:
+                    with open(convo_file, "r", encoding="utf-8", errors="ignore") as f:
                         convo_text = f.read()
+                    c_doc_id = f"doc_{convo_file.stem}"
                     convo_chunks = ChunkingEngine.chunk_qa_pairs(
                         text=convo_text,
-                        doc_id="doc_general_conversation",
-                        doc_name="general_conversation.txt",
-                        metadata={"is_sample": True, "source_type": "general_conversation", "category_badge": "CONVERSATION", "collection": "msmarco"}
+                        doc_id=c_doc_id,
+                        doc_name=convo_file.name,
+                        metadata={
+                            "is_sample": True,
+                            "source_type": "general_conversation",
+                            "category_badge": "CONVERSATION",
+                            "collection": "msmarco"
+                        }
                     )
                     all_chunks.extend(convo_chunks)
                 except Exception as e:
-                    logger.warning(f"Error loading general conversation into msmarco: {e}")
+                    logger.warning(f"Error loading {convo_file.name} into msmarco: {e}")
         else:
             docs = self.documents_by_coll.get(collection, {})
             raws = self.raw_texts_by_coll.get(collection, {})
