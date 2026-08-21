@@ -370,6 +370,42 @@ class ChunkingEngine:
         )
 
     @classmethod
+    def chunk_qa_pairs(
+        cls,
+        text: str,
+        doc_id: str,
+        doc_name: str,
+        metadata: Dict[str, Any] = None
+    ) -> List[ChunkInfo]:
+        """Parses USER: ... \\n ASSISTANT: ... blocks into direct semantic QA pair chunks."""
+        metadata = metadata or {}
+        chunks: List[ChunkInfo] = []
+        pattern = re.compile(r'(USER:\s*.+?\s*ASSISTANT:\s*.+?)(?=\n\s*USER:|\Z)', re.DOTALL | re.IGNORECASE)
+        matches = pattern.findall(text)
+
+        if not matches:
+            return cls.chunk_recursive(text, doc_id, doc_name, metadata=metadata)
+
+        for idx, match in enumerate(matches):
+            pair_text = match.strip()
+            if pair_text:
+                chunks.append(ChunkInfo(
+                    id=generate_chunk_id(doc_id, idx, pair_text),
+                    doc_id=doc_id,
+                    doc_name=doc_name,
+                    chunk_index=idx,
+                    content=pair_text,
+                    char_count=len(pair_text),
+                    metadata={
+                        **metadata,
+                        "strategy": "qa_pair",
+                        "source_type": "general_conversation",
+                        "category_badge": "CONVERSATION"
+                    }
+                ))
+        return chunks
+
+    @classmethod
     def chunk_document(
         cls,
         text: str,
@@ -380,6 +416,10 @@ class ChunkingEngine:
         chunk_overlap: int = 80,
         metadata: Dict[str, Any] = None
     ) -> List[ChunkInfo]:
+        metadata = metadata or {}
+        if doc_name.lower().startswith("general_conversation") or metadata.get("source_type") == "general_conversation":
+            return cls.chunk_qa_pairs(text, doc_id, doc_name, metadata)
+
         strategy = (strategy or "recursive").lower()
         if strategy == "fixed":
             return cls.chunk_fixed(text, doc_id, doc_name, chunk_size, chunk_overlap, metadata)

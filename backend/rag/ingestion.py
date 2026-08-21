@@ -183,6 +183,22 @@ class IngestionManager:
             if not msmarco_loader.is_loaded:
                 msmarco_loader.load_msmarco_corpus()
             all_chunks = msmarco_loader.get_passage_chunks(chunk_size, chunk_overlap)
+
+            # Include general conversation grounding dataset in msmarco collection
+            convo_path = settings.SAMPLE_DOCS_DIR / "general_conversation.txt"
+            if convo_path.exists():
+                try:
+                    with open(convo_path, "r", encoding="utf-8", errors="ignore") as f:
+                        convo_text = f.read()
+                    convo_chunks = ChunkingEngine.chunk_qa_pairs(
+                        text=convo_text,
+                        doc_id="doc_general_conversation",
+                        doc_name="general_conversation.txt",
+                        metadata={"is_sample": True, "source_type": "general_conversation", "category_badge": "CONVERSATION", "collection": "msmarco"}
+                    )
+                    all_chunks.extend(convo_chunks)
+                except Exception as e:
+                    logger.warning(f"Error loading general conversation into msmarco: {e}")
         else:
             docs = self.documents_by_coll.get(collection, {})
             raws = self.raw_texts_by_coll.get(collection, {})
